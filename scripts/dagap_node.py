@@ -1,16 +1,10 @@
-#!/usr/bin/python
+#! /usr/bin/python
 
 import rospy
 
-if __name__ == u'main':
-    rospy.loginfo("Starting node")
+if __name__ == u"__main__":
     rospy.init_node(u'dagap')
+    rospy.loginfo('Starting dagap node')
 
     sleeper = rospy.Rate(10)
-
-    while not rospy.is_shutdown():
-        try:
-            rospy.loginfo("Entering loop")
-            sleeper.sleep()
-        except KeyboardInterrupt:
-            break
+    rospy.spin()

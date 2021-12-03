@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="dagap" type="dagap_node.py"
+          name="dagap" output="screen">
+    </node>
+
+</launch>
