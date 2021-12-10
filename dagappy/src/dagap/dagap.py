@@ -1,6 +1,6 @@
 import rospy
 
-from dagap import GetGraspPose
+from dagap_msgs import GetGraspPose
 
 class DAGAP:
     def __init__(self):
