@@ -33,21 +33,13 @@ add_service_files(DIRECTORY srv FILES ${SRV_FILES})
 
 
 # Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   ${MSG_DEPS}
- )
+ generate_messages(DEPENDENCIES ${MSG_DEPS})
 
 
 ###################################
 ## catkin specific configuration ##
 ###################################
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES dagap_msgs
-#  CATKIN_DEPENDS geometry_msgs message_generation rospy std_msgs
-#  DEPENDS system_lib
-)
+catkin_package(DEPENDS ${MSG_DEPS} message_runtime)
 
 ###########
 ## Build ##

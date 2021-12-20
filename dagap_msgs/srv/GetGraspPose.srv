@@ -1,6 +1,6 @@
-string[] end_effectors
+geometry_msgs/PoseStamped[] end_effectors
 string object_name
 
 ---
 
-geometry_msgs/PoseStamped pose
+geometry_msgs/PoseStamped[] grasp_pose
