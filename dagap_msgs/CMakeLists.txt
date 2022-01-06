@@ -27,13 +27,13 @@ find_package(catkin REQUIRED COMPONENTS
 set(SRV_FILES
    FILES
    GetGraspPose.srv
- )
+)
 
 add_service_files(DIRECTORY srv FILES ${SRV_FILES})
 
 
 # Generate added messages and services with any dependencies listed here
- generate_messages(DEPENDENCIES ${MSG_DEPS})
+generate_messages(DEPENDENCIES ${MSG_DEPS})
 
 
 ###################################
