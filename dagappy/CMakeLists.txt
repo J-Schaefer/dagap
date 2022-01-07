@@ -7,6 +7,7 @@ project(dagappy)
 set(MSG_DEPS
   std_msgs
   geometry_msgs
+  dagap_msgs
 )
 
 
