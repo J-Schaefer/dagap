@@ -10,3 +10,6 @@ class Mesher:
     def get_cog(self):
         # TODO:
         pass
+
+    def make_urdf(self):
+        pass
