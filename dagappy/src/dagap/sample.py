@@ -19,5 +19,5 @@ class SampleGrasp():
     def load_gripper(self):
         urdf_path = self.gripper_path + '/urdf/wsg_50.urdf.xacro'
         rospy.loginfo("Loading gripper with path " + urdf_path)
-        pybullet.loadURDF('/home/jesch/ros_ws/ur_ws/src/fmauch_universal_robot/ur_description/urdf/ur5_robot.urdf.xacro')
+        pybullet.loadURDF('/home/jesch/ros_ws/iai_robots_ws/src/iai_pr2/iai_pr2_description/robots/pr2_with_odom_joints.xacro')
         # pybullet.loadURDF(urdf_path)

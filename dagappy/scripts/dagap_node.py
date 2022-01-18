@@ -8,6 +8,7 @@ if __name__ == u"__main__":
     rospy.loginfo('Starting dagap node')
 
     dagap = DAGAP()
+    dagap.grow_tree()
 
     sleeper = rospy.Rate(10)
     rospy.spin()
