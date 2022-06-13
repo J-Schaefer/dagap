@@ -1,0 +1,42 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/jesch/ros_ws/pycram_ws/devel/include/**",
+        "/home/jesch/ros_ws/giskard_ws/devel/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/devel/include/**",
+        "/home/jesch/ros_ws/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/Universal_Robots_ROS_Driver/controller_stopper/include/**",
+        "/home/jesch/ros_ws/pycram_ws/src/gpd_ros/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/iai_naive_kinematics_sim/include/**",
+        "/home/jesch/ros_ws/pycram_ws/src/knowrob/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/nav_pcontroller/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/iai_robot_drivers/omni_ethercat/include/**",
+        "/home/jesch/ros_ws/catkin_ws/src/pr2_control/include/**",
+        "/home/jesch/ros_ws/catkin_ws/src/pr2_gripper_sensor/pr2_gripper_sensor_controller/include/**",
+        "/home/jesch/ros_ws/catkin_ws/src/pr2_sensor_grasping/include/**",
+        "/home/jesch/ros_ws/giskard_ws/src/qpoases/include/**",
+        "/home/jesch/ros_ws/catkin_ws/src/robot_state_publisher/include/**",
+        "/home/jesch/ros_ws/pycram_ws/src/rosprolog/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/iai_robot_drivers/soft_runstop/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/Universal_Robots_ROS_Driver/ur_calibration/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/Universal_Robots_ROS_Driver/ur_controllers/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/ur_modern_driver/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/Universal_Robots_ROS_Driver/ur_robot_driver/include/**",
+        "/home/jesch/ros_ws/iai_robots_ws/src/iai_robot_drivers/wsg_50_driver/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

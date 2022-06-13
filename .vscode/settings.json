@@ -1,0 +1,11 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/jesch/ros_ws/pycram_ws/devel/lib/python3/dist-packages",
+        "/home/jesch/ros_ws/giskard_ws/devel/lib/python3/dist-packages",
+        "/home/jesch/ros_ws/iai_robots_ws/devel/lib/python3/dist-packages",
+        "/home/jesch/ros_ws/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/home/jesch/betterpybullet/bullet3/build_cmake/better_python",
+        "/home/jesch/betterpybullet/bullet3/build_cmake/examples/pybullet"
+    ]
+}
