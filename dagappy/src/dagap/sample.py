@@ -1,11 +1,11 @@
 # Trial and Error
 # Call a sim (PyBullet) to sample grasp
 
+import rospkg
+import rospy
 import pybullet
 import pybullet_data
 import os
-import rospkg
-import rospy
 
 
 class SampleGrasp():

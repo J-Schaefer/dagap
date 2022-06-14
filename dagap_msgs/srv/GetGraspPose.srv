@@ -1,5 +1,4 @@
-geometry_msgs/PoseStamped[] end_effectors
-string object_name
+string description
 
 ---
 

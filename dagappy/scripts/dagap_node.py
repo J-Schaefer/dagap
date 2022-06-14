@@ -9,6 +9,3 @@ if __name__ == u"__main__":
 
     dagap = DAGAP()
     dagap.grow_tree()
-
-    sleeper = rospy.Rate(10)
-    rospy.spin()

@@ -15,7 +15,7 @@ class DAGAP:
     def cb_service(self, req):
         pass
 
-    # TODO: grow tree
+# TODO: grow tree
 
     def grow_tree(self):
         rospy.loginfo("Growing tree.")
