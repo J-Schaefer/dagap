@@ -9,3 +9,4 @@ if __name__ == u"__main__":
 
     dagap = DAGAP()
     dagap.grow_tree()
+    dagap.run()
