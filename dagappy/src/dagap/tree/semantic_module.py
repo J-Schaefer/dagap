@@ -1,10 +1,10 @@
-import nltk
 import rospy
 import yaml
 from yaml.loader import SafeLoader
 import pathlib
 from py_trees import Behaviour
-import os.path
+import nltk
+
 
 class SemanticModule(Behaviour):
     semantic_command = None
@@ -22,3 +22,12 @@ class SemanticModule(Behaviour):
             with open(self.config_file_path) as f:
                 self.config_data = yaml.load(f, Loader=SafeLoader)
                 print(self.config_data)
+
+    def define(self, command):
+        """
+        Define the meaning of the entered command
+        :type command: string
+        """
+        tokens = nltk.word_tokenize(command)
+        print(tokens)
+        pass

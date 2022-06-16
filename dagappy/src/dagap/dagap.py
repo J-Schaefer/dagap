@@ -6,6 +6,7 @@ from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
 from dagap.tree.semantic_module import SemanticModule
 
+
 class DAGAP:
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
@@ -14,6 +15,9 @@ class DAGAP:
         pass
 
     def cb_service(self, req):
+        print("Running service")
+        req = "Bla"
+        return req
         pass
 
 # TODO: grow tree
