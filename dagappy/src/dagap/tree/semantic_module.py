@@ -14,6 +14,7 @@ class SemanticModule(Behaviour):
     def __init__(self, name):
         super(SemanticModule, self).__init__()
         # self.semantic_command = command
+        print("Initialising semantic module.")
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.config_file_path = pathlib.Path(__file__).resolve().parents[3].joinpath("config/semantic.yaml")
         if not self.config_file_path.is_file():
@@ -21,7 +22,7 @@ class SemanticModule(Behaviour):
         else:
             with open(self.config_file_path) as f:
                 self.config_data = yaml.load(f, Loader=SafeLoader)
-                print(self.config_data)
+                # print(self.config_data)
 
     def define(self, command):
         """

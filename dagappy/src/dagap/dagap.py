@@ -10,23 +10,29 @@ from dagap.tree.semantic_module import SemanticModule
 class DAGAP:
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
+        self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
         pass
 
     def cb_service(self, req):
-        print("Running service")
+        print("Running dagap service")
         req = "Bla"
         return req
-        pass
 
 # TODO: grow tree
 
-    def grow_tree(self):
+    def grow_dagap(self):
         rospy.loginfo("Growing tree.")
-        preparation = Sequence()
+        root = Sequence("DAGAP")
+        root.add_child(self.grow_preparation())
+        return root
+
+    def grow_preparation(self):
+        preparation = Sequence("Preparation")
         preparation.add_child(Mesher("Prepare meshes"))  # add Mesher
         preparation.add_child(SemanticModule("Parse command"))
+        return preparation
 
     def run(self):
         sleeper = rospy.Rate(10)  # rate in Hz
