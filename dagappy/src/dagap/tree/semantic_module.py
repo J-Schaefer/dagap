@@ -22,7 +22,7 @@ class SemanticModule(Behaviour):
         else:
             with open(self.config_file_path) as f:
                 self.config_data = yaml.load(f, Loader=SafeLoader)
-                # print(self.config_data)
+                print(self.config_data)
 
     def define(self, command):
         """

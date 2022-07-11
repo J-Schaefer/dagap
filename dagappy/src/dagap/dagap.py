@@ -10,7 +10,7 @@ from dagap.tree.semantic_module import SemanticModule
 class DAGAP:
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
-        self.semantic_module = SemanticModule
+        self.semantic_module = SemanticModule('Semantic Module')
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
@@ -18,8 +18,10 @@ class DAGAP:
 
     def cb_service(self, req):
         print("Received request.")
-        req = "Bla"
-        return req
+        print(req.description)
+        self.semantic_module.define(req.description)
+        res = "Bla"
+        return res
 
     # TODO: grow tree
 
