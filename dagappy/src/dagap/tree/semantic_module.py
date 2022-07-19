@@ -7,13 +7,14 @@ import nltk
 
 
 class SemanticModule(Behaviour):
-    semantic_command = None
-    package_root = None
-    config_file_path = None
+    # semantic_command = None
+    # package_root = None
+    # config_file_path = None
 
     def __init__(self, name):
         super(SemanticModule, self).__init__()
         # self.semantic_command = command
+        nltk.download('punkt')
         print("Initialising semantic module.")
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.config_file_path = pathlib.Path(__file__).resolve().parents[3].joinpath("config/semantic.yaml")
@@ -24,11 +25,16 @@ class SemanticModule(Behaviour):
                 self.config_data = yaml.load(f, Loader=SafeLoader)
                 print(self.config_data)
 
-    def define(self, command):
+    def define_action(self, command):
         """
         Define the meaning of the entered command
         :type command: string
         """
-        tokens = nltk.word_tokenize(command)
-        print(tokens)
+        try:
+            print(self.config_data[command])
+        except KeyError:
+            tokens = nltk.word_tokenize(command)
+            print("Tokens are:")
+            print(tokens)
+            # TODO: process tokens and try to find fitting action
         pass

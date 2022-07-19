@@ -19,7 +19,7 @@ class DAGAP:
     def cb_service(self, req):
         print("Received request.")
         print(req.description)
-        self.semantic_module.define(req.description)
+        self.semantic_module.define_action(req.description.data)
         res = "Bla"
         return res
 
