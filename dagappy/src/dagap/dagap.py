@@ -5,9 +5,12 @@ from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
 from dagap.tree.semantic_module import SemanticModule
+from dagap.tree.grasp_planner import GraspPlanner
 
 
 class DAGAP:
+    manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
+
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
         self.semantic_module = SemanticModule('Semantic Module')
@@ -19,7 +22,8 @@ class DAGAP:
     def cb_service(self, req):
         print("Received request.")
         print(req.description)
-        self.semantic_module.define_action(req.description.data)
+        sentence = self.semantic_module.define_action(req.description.data)
+        print(self.manipulation_cases.get(sentence, "Not found"))
         res = "Bla"
         return res
 

@@ -32,9 +32,10 @@ class SemanticModule(Behaviour):
         """
         try:
             print(self.config_data[command])
+            res = self.config_data[command]
         except KeyError:
             tokens = nltk.word_tokenize(command)
             print("Tokens are:")
             print(tokens)
             # TODO: process tokens and try to find fitting action
-        pass
+        return res
