@@ -29,6 +29,7 @@ class SemanticModule(Behaviour):
         """
         Define the meaning of the entered command
         :type command: string
+        :return string
         """
         try:
             print(self.config_data[command])

@@ -6,7 +6,7 @@ from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
 from dagap.tree.semantic_module import SemanticModule
 from dagap.tree.grasp_planner import GraspPlanner
-
+from dagap.tree.robot import Robot
 
 class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
@@ -14,6 +14,7 @@ class DAGAP:
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
         self.semantic_module = SemanticModule('Semantic Module')
+        self.robot = Robot()
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
