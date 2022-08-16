@@ -15,7 +15,7 @@ class SemanticModule(Behaviour):
         super(SemanticModule, self).__init__()
         # self.semantic_command = command
         nltk.download('punkt')
-        print("Initialising semantic module.")
+        rospy.loginfo("Initialising semantic module.")
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.config_file_path = pathlib.Path(__file__).resolve().parents[3].joinpath("config/semantic.yaml")
         if not self.config_file_path.is_file():
