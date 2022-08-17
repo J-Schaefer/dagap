@@ -25,7 +25,7 @@ class Robot:
             # print(self.robot)
             # self.chain = self.compile_chain(self.robot)
             with open(self.robot_description_file_path, 'w') as f:
-                f.write(self.robot)
+                f.write(robot_xml)
                 f.close()
         except rosgraph.masterapi.MasterError:
             rospy.logerr(u'No information about robot on param server. Closing.')
