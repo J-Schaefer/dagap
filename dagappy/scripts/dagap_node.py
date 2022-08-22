@@ -5,7 +5,7 @@ from dagap.dagap import DAGAP
 
 if __name__ == u"__main__":
     rospy.init_node(u'dagap')
-    rospy.loginfo('Starting dagap node')
+    rospy.loginfo('Starting DAGAP node.')
 
     dagap = DAGAP()
     dagap.run()

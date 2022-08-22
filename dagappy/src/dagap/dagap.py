@@ -1,7 +1,7 @@
 import rospy
 
 from dagap_msgs.srv import GetGraspPose
-from dagap.sample import SampleGrasp
+# from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
 from dagap.tree.semantic_module import SemanticModule

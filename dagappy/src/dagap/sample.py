@@ -8,7 +8,7 @@ import pybullet_data
 import os
 
 
-class SampleGrasp():
+class SampleGrasp:
     def __init__(self, gripper_name, object_name):
         pybullet.connect(pybullet.GUI)
         pybullet.resetSimulation()

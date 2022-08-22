@@ -19,14 +19,17 @@ class Robot:
 
         try:
             robot_xml = rosparam.get_param(u'robot_description')
-            tree = ET.parse(robot_xml)
-            root = tree.getroot()
-            print(root)
+            # print(root)
             # print(self.robot)
             # self.chain = self.compile_chain(self.robot)
             with open(self.robot_description_file_path, 'w') as f:
                 f.write(robot_xml)
                 f.close()
+            root = ET.fromstring(robot_xml)
+            for child in root:
+                if child.tag == u'link':
+                    print(child.attrib)
+
         except rosgraph.masterapi.MasterError:
             rospy.logerr(u'No information about robot on param server. Closing.')
             sys.exit("No information about robot.")
