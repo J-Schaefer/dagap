@@ -4,7 +4,7 @@ from dagap_msgs.srv import GetGraspPose
 # from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
-from dagap.tree.semantic_module import SemanticModule
+from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
 
@@ -13,7 +13,7 @@ class DAGAP:
 
     def __init__(self):
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
-        self.semantic_module = SemanticModule('Semantic Module')
+        self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
@@ -23,8 +23,8 @@ class DAGAP:
     def cb_service(self, req):
         print("Received request.")
         print(req.description)
-        sentence = self.semantic_module.define_action(req.description.data)
-        print(self.manipulation_cases.get(sentence, "Not found"))
+        sentence = self.nl_module.define_action(req.description.data)
+        # print(self.manipulation_cases.get(sentence, "Not found"))
         res = "Bla"
         return res
 
@@ -39,7 +39,7 @@ class DAGAP:
     def grow_preparation(self):
         preparation = Sequence("Preparation")
         preparation.add_child(Mesher("Prepare meshes"))  # add Mesher
-        preparation.add_child(SemanticModule("Parse command"))
+        preparation.add_child(NLModule("Parse command"))
         return preparation
 
     def run(self):

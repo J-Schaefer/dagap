@@ -6,16 +6,16 @@ from py_trees import Behaviour
 import nltk
 
 
-class SemanticModule(Behaviour):
+class NLModule(Behaviour):
     # semantic_command = None
     # package_root = None
     # config_file_path = None
 
     def __init__(self, name):
-        super(SemanticModule, self).__init__()
+        super(NLModule, self).__init__()
         # self.semantic_command = command
         nltk.download('punkt')
-        rospy.loginfo("Initialising semantic module.")
+        rospy.loginfo("Initialising NL module.")
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.config_file_path = pathlib.Path(__file__).resolve().parents[3].joinpath("config/semantic.yaml")
         if not self.config_file_path.is_file():
@@ -33,10 +33,10 @@ class SemanticModule(Behaviour):
         """
         try:
             print(self.config_data[command])
-            res = self.config_data[command]
+            res = self.config_data[command]  # check if exact word sequence is on yaml config
         except KeyError:
             tokens = nltk.word_tokenize(command)
-            print("Tokens are:")
+            print("Tokens are: ")
             print(tokens)
             # TODO: process tokens and try to find fitting action
         return res
