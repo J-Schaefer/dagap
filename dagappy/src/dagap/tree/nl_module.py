@@ -23,7 +23,7 @@ class NLModule(Behaviour):
         else:
             with open(self.config_file_path) as f:
                 self.config_data = yaml.load(f, Loader=SafeLoader)
-                print(self.config_data)
+                rospy.loginfo(self.config_data)
 
     def define_action(self, command):
         """
@@ -36,7 +36,7 @@ class NLModule(Behaviour):
             res = self.config_data[command]  # check if exact word sequence is on yaml config
         except KeyError:
             tokens = nltk.word_tokenize(command)
-            print("Tokens are: ")
-            print(tokens)
+            rospy.loginfo("Tokens are: ")
+            rospy.loginfo(tokens)
             # TODO: process tokens and try to find fitting action
         return res

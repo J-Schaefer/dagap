@@ -26,26 +26,34 @@ class Robot:
                 f.write(robot_xml)
                 f.close()
             root = ET.fromstring(robot_xml)
-            for child in root:
-                if child.tag == u'link':
-                    print(child.attrib)
+            rospy.loginfo("Done reading XML. Start compilation of chain.")
+            self.robot_description = []
+            self.robot_description = self.compile_chain(root)
 
         except rosgraph.masterapi.MasterError:
             rospy.logerr(u'No information about robot on param server. Closing.')
             sys.exit("No information about robot.")
 
-    # def compile_chain(self, robot_description):
-    #     """
-    #
-    #     :param robot_description: string from param server
-    #     :type robot_description: string
-    #     :return:
-    #     """
-    #     line_list = robot_description.splitlines()
-    #     for line in line_list:
-    #
-    #     print(num_links)
-    #     return 0
+    def compile_chain(self, robot_description_xml):
+        """
+        Read robot description and
+        :param robot_description_xml: string from param server
+        :type robot_description_xml: string
+        :return:
+        """
+
+        self.gripper_list = []
+
+        for element in robot_description_xml:
+            if element.tag == u'link':
+                link_name = element.attrib.get('name')
+                # print(link_name)
+                if u"gripper" in link_name and u"frame" in link_name and u"tool" in link_name:
+                    self.gripper_list.append(link_name)
+                pass
+        rospy.loginfo("Found " + str(len(self.gripper_list)) + " grippers.")
+
+        return 0
 
 
 class Link:
