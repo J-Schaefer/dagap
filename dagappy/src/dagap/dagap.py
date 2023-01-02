@@ -7,6 +7,8 @@ from dagap.tree.mesher import Mesher
 from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
+import tf
+
 
 class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
@@ -15,6 +17,8 @@ class DAGAP:
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
         self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
+
+        self.tfm = tf.TransformListener()
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
