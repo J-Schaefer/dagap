@@ -1,5 +1,7 @@
+import geometry_msgs.msg
 import rospy
 
+import dagap_msgs.srv
 from dagap_msgs.srv import GetGraspPose
 # from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
@@ -28,8 +30,14 @@ class DAGAP:
         print("Received request.")
         print(req.description)
         sentence = self.nl_module.define_action(req.description.data)
+        try:
+            (trans, rot) = self.tfm.lookupTransform('/r_gripper_tool_frame', '/l_gripper_tool_frame', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            rospy.logerr("Could not find transform.")
         # print(self.manipulation_cases.get(sentence, "Not found"))
-        res = "Bla"
+        Pose1 = geometry_msgs.msg.PoseStamped()
+        Pose2 = geometry_msgs.msg.PoseStamped()
+        res = dagap_msgs.srv.GetGraspPoseResponse([Pose1, Pose2])
         return res
 
     # TODO: grow tree
