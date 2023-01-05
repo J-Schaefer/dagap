@@ -1,8 +1,8 @@
-Cut the cucumber: one hand fixed
-Open the fridge: one hand seeking
-Open drawer: one hand seeking
-Take object out of fridge: one hand seeking
-Take object out of drawer: one hand seeking
-Peel cucumber: one hand fixed
+Cut the cucumber: one hand support
+Open the fridge: one hand task
+Open drawer: one hand task
+Take object out of fridge: one hand task
+Take object out of drawer: one hand task
+Peel cucumber: one hand support
 Bring pot to location: fixed offset
-Open bottle: one hand fixed
+Open bottle: one hand support
