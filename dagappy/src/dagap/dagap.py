@@ -19,6 +19,7 @@ class DAGAP:
         self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
         self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
+        self.grasp_planner = GraspPlanner()
 
         self.tfm = tf.TransformListener()
         # self.tree = BehaviourTree(self.grow_dagap())
@@ -27,17 +28,14 @@ class DAGAP:
         pass
 
     def cb_service(self, req):
-        print("Received request.")
-        print(req.description)
-        sentence = self.nl_module.define_action(req.description.data)
-        try:
-            (trans, rot) = self.tfm.lookupTransform('/r_gripper_tool_frame', '/l_gripper_tool_frame', rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            rospy.logerr("Could not find transform.")
-        # print(self.manipulation_cases.get(sentence, "Not found"))
-        Pose1 = geometry_msgs.msg.PoseStamped()
-        Pose2 = geometry_msgs.msg.PoseStamped()
-        res = dagap_msgs.srv.GetGraspPoseResponse([Pose1, Pose2])
+        rospy.loginfo("Received request.")
+        rospy.loginfo("Request description: " + str(req.description))
+        rospy.loginfo(req.object_frames)
+
+        action = self.nl_module.define_action(req.description.data)
+        poses = self.grasp_planner.decide(objects=req.object_frames, action=action)
+
+        res = dagap_msgs.srv.GetGraspPoseResponse(poses)
         return res
 
     # TODO: grow tree

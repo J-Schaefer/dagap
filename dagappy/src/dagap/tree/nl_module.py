@@ -32,7 +32,7 @@ class NLModule(Behaviour):
         :return string
         """
         try:
-            print(self.config_data[command])
+            rospy.loginfo(self.config_data[command])
             res = self.config_data[command]  # check if exact word sequence is on yaml config
         except KeyError:
             tokens = nltk.word_tokenize(command)
