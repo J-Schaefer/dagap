@@ -16,12 +16,12 @@ class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
 
     def __init__(self):
-        self.service = rospy.Service('srv_dagap', GetGraspPose, self.cb_service)
+        self.service = rospy.Service('dagap_query', GetGraspPose, self.cb_service)
         self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
         self.grasp_planner = GraspPlanner()
 
-        self.tfm = tf.TransformListener()
+        # self.tfm = tf.TransformListener()
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
@@ -33,10 +33,13 @@ class DAGAP:
         rospy.loginfo(req.object_frames)
 
         action = self.nl_module.define_action(req.description.data)
-        poses = self.grasp_planner.decide(objects=req.object_frames, action=action)
+        if isinstance(action, int):
+            rospy.logerr("Error in NL module. Exiting.")
+        else:  # no error in NL processing
+            poses = self.grasp_planner.decide(objects=req.object_frames, action=action, robot=self.robot)
 
-        res = dagap_msgs.srv.GetGraspPoseResponse(poses)
-        return res
+            res = dagap_msgs.srv.GetGraspPoseResponse(poses)
+            return res
 
     # TODO: grow tree
 

@@ -38,5 +38,6 @@ class NLModule(Behaviour):
             tokens = nltk.word_tokenize(command)
             rospy.loginfo("Tokens are: ")
             rospy.loginfo(tokens)
+            res = 1
             # TODO: process tokens and try to find fitting action
         return res
