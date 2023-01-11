@@ -36,7 +36,10 @@ class DAGAP:
         if isinstance(action, int):
             rospy.logerr("Error in NL module. Exiting.")
         else:  # no error in NL processing
-            poses = self.grasp_planner.decide(objects=req.object_frames, action=action, robot=self.robot)
+            object_frames = []
+            for element in req.object_frames:
+                object_frames.append(element.data)
+            poses = self.grasp_planner.decide(objects=object_frames, action=action, robot=self.robot)
 
             res = dagap_msgs.srv.GetGraspPoseResponse(poses)
             return res
