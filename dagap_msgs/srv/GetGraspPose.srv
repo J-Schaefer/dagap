@@ -3,4 +3,4 @@ std_msgs/String[] object_frames
 
 ---
 
-geometry_msgs/PoseStamped[] grasp_pose
+geometry_msgs/TransformStamped[] grasp_pose

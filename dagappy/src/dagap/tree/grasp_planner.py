@@ -22,10 +22,19 @@ class GraspPlanner(Behaviour):
                     (trans, rot) = self.tfm.lookupTransform(gripper, task_object, rospy.Time(0))
                     pose_list.append([trans, rot])
                     distance.append(norm(trans))
+                winner = robot.gripper_list[distance.index(min(distance))]
+                rospy.loginfo("Found closest gripper: " + winner)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Could not find transform.")
             # print(self.manipulation_cases.get(sentence, "Not found"))
-            Pose1 = geometry_msgs.msg.PoseStamped()
-            Pose2 = geometry_msgs.msg.PoseStamped()
+            GraspPose = geometry_msgs.msg.TransformStamped()
+            GraspPose.header.frame_id = winner
+            GraspPose.transform.translation.x = pose_list[distance.index(min(distance))][0][0]
+            GraspPose.transform.translation.y = pose_list[distance.index(min(distance))][0][1]
+            GraspPose.transform.translation.z = pose_list[distance.index(min(distance))][0][2]
+            GraspPose.transform.rotation.x = pose_list[distance.index(min(distance))][1][0]
+            GraspPose.transform.rotation.y = pose_list[distance.index(min(distance))][1][1]
+            GraspPose.transform.rotation.z = pose_list[distance.index(min(distance))][1][2]
+            GraspPose.transform.rotation.w = pose_list[distance.index(min(distance))][1][3]
 
-        return [Pose1, Pose2]
+        return [GraspPose]
