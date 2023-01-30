@@ -4,6 +4,7 @@ import tf
 import geometry_msgs
 from numpy.linalg import norm
 
+
 class GraspPlanner(Behaviour):
     def __init__(self):
         rospy.loginfo("Starting grasp planner")
@@ -20,6 +21,7 @@ class GraspPlanner(Behaviour):
                     pose_list = []
                     distance = []
                     for gripper in robot.gripper_list:
+                        # FIXME: get tf prefix and concatenate, right now frame cannot be found
                         (trans, rot) = self.tfm.lookupTransform(gripper, task_object, rospy.Time(0))
                         pose_list.append([trans, rot])
                         distance.append(norm(trans))
