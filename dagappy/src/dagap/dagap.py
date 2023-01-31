@@ -9,6 +9,7 @@ from dagap.tree.mesher import Mesher
 from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
+from dagap.tree.opm import OPM
 import tf
 
 
@@ -20,6 +21,7 @@ class DAGAP:
         self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
         self.grasp_planner = GraspPlanner()
+        self.opm = OPM()
 
         # self.tfm = tf.TransformListener()
         # self.tree = BehaviourTree(self.grow_dagap())
