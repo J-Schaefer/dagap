@@ -22,7 +22,7 @@ class GraspPlanner(Behaviour):
                     distance = []
                     for gripper in robot.gripper_list:
                         # FIXME: get tf prefix and concatenate, right now frame cannot be found
-                        (trans, rot) = self.tfm.lookupTransform("pr2/"+gripper, task_object, rospy.Time(0))
+                        (trans, rot) = self.tfm.lookupTransform(gripper, task_object, rospy.Time(0))
                         pose_list.append([trans, rot])
                         distance.append(norm(trans))
                     winner = robot.gripper_list[distance.index(min(distance))]

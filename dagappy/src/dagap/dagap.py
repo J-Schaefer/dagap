@@ -9,7 +9,7 @@ from dagap.tree.mesher import Mesher
 from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
-from dagap.tree.opm import OPM
+from dagap.tree.opm.opm import OPM
 import tf
 
 
@@ -27,7 +27,6 @@ class DAGAP:
         # self.tree = BehaviourTree(self.grow_dagap())
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
-        pass
 
     def cb_service(self, req):
         rospy.loginfo("Received request.")
