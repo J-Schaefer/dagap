@@ -1,0 +1,3 @@
+std_msgs/String Object
+geometry_msgs/Pose object_location
+std_msgs/Bool in_cabinet

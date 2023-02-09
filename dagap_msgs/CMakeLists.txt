@@ -23,12 +23,20 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 
+## Generate messages in the 'msg' folder
+set(MSG_FILES
+   FILES
+   OPMObjectQuery.msg
+)
+
 ## Generate services in the 'srv' folder
 set(SRV_FILES
    FILES
    GetGraspPose.srv
+   Query.srv
 )
 
+add_message_files(DIRECTORY msg FILES ${MSG_FILES})
 add_service_files(DIRECTORY srv FILES ${SRV_FILES})
 
 
