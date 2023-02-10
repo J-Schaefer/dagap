@@ -6,6 +6,7 @@ import rospy
 import pathlib
 import sys
 import xml.etree.ElementTree as ET
+from giskard_msgs.srv import GetGroupInfo
 
 
 class Robot:
@@ -13,10 +14,15 @@ class Robot:
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.model_path = self.package_root.joinpath("model")
         self.robot_description_file_path = self.model_path.joinpath("robot_description.xml")
+
+        try:
+            self.gripper_watcher = rospy.ServiceProxy('/giskard/get_group_info', GetGroupInfo)
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
         if not os.path.exists(self.model_path):
             # check if folder exists and create
             os.makedirs(self.model_path)
-
         try:
             robot_xml = rosparam.get_param(u'robot_description')
             # print(root)
@@ -55,6 +61,11 @@ class Robot:
 
         return 0
 
+    def check_gripper(self):
+        group_name_l = u"l_gripper"
+        group_name_r = u"r_gripper"
+        status_l = self.gripper_watcher(group_name_l)
+        status_r = self.gripper_watcher(group_name_r)
 
 class Link:
     def __init__(self, name, parent):
