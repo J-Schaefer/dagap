@@ -1,16 +1,12 @@
-import random
-from collections import Counter
-from scipy.spatial.distance import euclidean
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+@author: Petra Wenzl
+"""
 
-'''
-Author: Petra Wenzl
-Example testing values
-objects = ['plate', 'cup']
-coordinates = {'plate': (0,0,0), 'cup': (1,1,1)}
-sequence = ['plate', 'cup']
-start_coordinates = [[0,0,1], [1,1,0]]
-containment = ['plate']
-'''
+import random
+# from collections import Counter
+from scipy.spatial.distance import euclidean
 
 
 class OPM:
@@ -18,55 +14,57 @@ class OPM:
     def __init__(self):
         pass
 
-    def predict_sequence(self, objects, coordinates, sequence, start_coordinates,
-                         containment, dimension=2):
+    def predict_next_action(self, object_information, dimension=2):
         '''
-        Generate a sequence of actions based on weighted cost.
+        Predict the next action based on weighted cost.
+
         Parameters
         ----------
-        objects : list
-            Objects in episode.
-        coordinates : dictionary
-            Coordinates of objects.
-        sequence : list
-            List of actions/objects in sequence.
-        start_coordinates : list
-            List of coordinates where subject is standing before each action.
-        containment: list
-            List of all objects being stored in closed locations (drawers etc.).
+        object_information : list of lists
+            List of objects used in the sequence with spatial information.
         dimension : list [int, str], optional
-            Dimension in which to consider distances. The default is [3, ].
+            Dimension in which to consider distances. The default is [2, ].
+
         Returns
         -------
-        predicted_sequence : list
-            Model-generated sequence of actions (objects to interact with).
+        predicted_action : str
+            Model-generated next action (object to interact with).
         '''
+
+        # get spatial info from object_information
+        objects = [elem[0] for elem in object_information
+                   if elem[0] != 'robot']
+        sequence = objects
+        coordinates = {elem[0]: elem[1] for elem in object_information
+                       if elem in objects}
+        start_coordinates = [elem[1] for elem in object_information
+                             if elem[0] == 'robot']
+        containment = []
 
         # set category parameters
         strong_k = ['tray', 'placemat']
-        mid_k = ['plate', 'napkin']
+        mid_k = ['plate', 'napkin', 'bowl']
 
         value_c = 1.8
         value_k = 0.2
         value_mid_k = 0.3
-        value_food_k = 1.7
+        # value_food_k = 1.7
 
         c = {obj: value_c if obj in containment else 1.0 for obj in objects}
         k = {obj: value_k if obj in strong_k else value_mid_k if obj in mid_k
-        else 1.0 for obj in objects}
-        # print('k: ', k)
-        # print('c: ', c)
+             else 1.0 for obj in objects}
 
         i = 0
-        generated_sequence = []
-        possible_items = dict.fromkeys(objects, 0)  # generate dict from obj list
-        item_count = Counter(objects)
+        # generated_sequence = []
+        possible_items = dict.fromkeys(objects, 0)
+        # item_count = Counter(objects)
 
         coord_index = 0
 
-        new_coords, new_start_coords = filter_for_dimension(coordinates,
-                                                            start_coordinates,
-                                                            dimension)
+        new_coords, new_start_coords = self.filter_for_dimension(self,
+                                                                 coordinates,
+                                                                 start_coordinates,
+                                                                 dimension)
 
         while i < len(sequence):
             for obj in possible_items.keys():
@@ -86,20 +84,23 @@ class OPM:
             minval = random.choice(minval)
 
             prediction = minval
-            generated_sequence.append(prediction)
+            # generated_sequence.append(prediction)
 
-            if item_count[sequence[i]] > 1:
-                item_count[sequence[i]] = item_count[sequence[i]] - 1
-            else:
-                del possible_items[sequence[i]]
+            # if item_count[sequence[i]] > 1:
+            #     item_count[sequence[i]] = item_count[sequence[i]] - 1
+            # else:
+            #     del possible_items[sequence[i]]
 
-            coord_index += 1
-            i += 1
+            # coord_index += 1
+            # i += 1
 
-        return generated_sequence
+            predicted_item = [elem for elem in object_information
+                              if elem[0] == prediction]
 
+        return predicted_item
 
-    def filter_for_dimension(self, coordinates, start_coordinates, dimension=2):
+    def filter_for_dimension(self, coordinates, start_coordinates,
+                             dimension=2):
         '''
         Filter coordinates and start coordinates for given dimension
         (e.g., xyz -> xy).
