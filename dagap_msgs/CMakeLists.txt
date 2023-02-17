@@ -33,7 +33,8 @@ set(MSG_FILES
 set(SRV_FILES
    FILES
    GetGraspPose.srv
-   Query.srv
+   GetOPMSortedList.srv
+   GetNextOPMObject.srv
 )
 
 add_message_files(DIRECTORY msg FILES ${MSG_FILES})

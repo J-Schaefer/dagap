@@ -2,7 +2,7 @@ import geometry_msgs.msg
 import rospy
 
 import dagap_msgs.srv
-from dagap_msgs.srv import GetGraspPose
+from dagap_msgs.srv import GetGraspPose, GetOPMSortedList, GetNextOPMObject
 # from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
@@ -17,7 +17,13 @@ class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
 
     def __init__(self):
-        self.service = rospy.Service('dagap_query', GetGraspPose, self.cb_service)
+        # Query to DAGAP, req: objects to manipulate, res: hand to manipulate with
+        self.service_dagap_query = rospy.Service('dagap_query', GetGraspPose, self.cb_dagap_service)
+        # Service to query OPM, req: list of objects, res: sorted list of objects
+        self.service_opm_query = rospy.Service('opm_query', GetOPMSortedList, self.cb_opm_service)
+        # Query to both, req: list of objects, res: next object with hand
+        self.service_common_query = rospy.Service('dagap_opm_query', GetNextOPMObject, self.cb_common_service_query)
+
         self.nl_module = NLModule('Natural Language Module')
         self.robot = Robot()
         self.grasp_planner = GraspPlanner()
@@ -28,8 +34,8 @@ class DAGAP:
         # sim = SampleGrasp('wsg_50', 'cucumber')
         # sim.load_gripper()
 
-    def cb_service(self, req):
-        rospy.loginfo("Received request.")
+    def cb_dagap_service(self, req):
+        rospy.loginfo("Received DAGAP request.")
         rospy.loginfo("Request description: " + str(req.description))
         rospy.loginfo(req.object_frames)
 
@@ -44,6 +50,19 @@ class DAGAP:
 
             res = dagap_msgs.srv.GetGraspPoseResponse(poses)
             return res
+
+    # Query to only query OPM
+    def cb_opm_service(self, req):
+        # TODO: add service to get sorted list from OPM
+        pass
+
+    # Query for next object and how to grasp
+    def cb_common_service_query(self, req):
+        rospy.loginfo("Received OPM/DAGAP request.")
+        next_object = self.opm.predict_next_action(req.object_list)
+        self.grasp_planner.decide(objects=next_object, action=u"one hand task", robot=self.robot)
+        # TODO: add response
+        pass
 
     # TODO: grow tree
 

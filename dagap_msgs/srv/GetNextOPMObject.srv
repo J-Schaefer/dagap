@@ -1,0 +1,6 @@
+OPMObjectQuery[] object_list
+geometry_msgs/Pose current_location
+
+---
+
+geometry_msgs/TransformStamped[] grasp_pose
