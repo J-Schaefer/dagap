@@ -22,6 +22,8 @@ class OPM:
         ----------
         object_information : list of lists
             List of objects used in the sequence with spatial information.
+            Default: [['object1', [[x, y, z], [orientation]]],
+                      'object2', [[x, y, z], [orientation]]]
         dimension : list [int, str], optional
             Dimension in which to consider distances. The default is [2, ].
 
