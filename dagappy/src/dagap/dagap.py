@@ -46,8 +46,8 @@ class DAGAP:
             object_frames = []
             for element in req.object_frames:
                 object_frames.append(element.data)
-            poses = self.grasp_planner.decide(objects=object_frames, action=action, robot=self.robot)
 
+            poses = self.grasp_planner.decide(objects=object_frames, action=action, robot=self.robot)
             res = dagap_msgs.srv.GetGraspPoseResponse(poses)
             return res
 
@@ -60,12 +60,12 @@ class DAGAP:
     def cb_common_service_query(self, req):
         rospy.loginfo("Received OPM/DAGAP request.")
         next_object = self.opm.predict_next_action(req.object_list)
-        self.grasp_planner.decide(objects=next_object, action=u"one hand task", robot=self.robot)
-        # TODO: add response
-        pass
+
+        poses = self.grasp_planner.decide(objects=next_object, action=u"one hand task", robot=self.robot)
+        res = dagap_msgs.srv.GetGraspPoseResponse(poses)
+        return res
 
     # TODO: grow tree
-
     def grow_dagap(self):
         rospy.loginfo("Growing tree.")
         root = Sequence("DAGAP")
