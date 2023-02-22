@@ -78,6 +78,3 @@ class GraspPlanner(Behaviour):
 
         elif action == u"fixed offset":
             pass
-
-        elif action == u"self-handover":
-            pass
