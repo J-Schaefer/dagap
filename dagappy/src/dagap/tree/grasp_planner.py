@@ -1,9 +1,9 @@
 import rospy
 from py_trees import Behaviour
 import tf
-import geometry_msgs
+from geometry_msgs.msg import TransformStamped, PoseStamped
 from numpy.linalg import norm
-
+from dagap.utils.tfwrapper import *
 
 class GraspPlanner(Behaviour):
     def __init__(self):
@@ -47,6 +47,7 @@ class GraspPlanner(Behaviour):
                         pose_list.append([trans, rot])
                         distance.append(norm(trans))
                     winner = robot.gripper_list[distance.index(min(distance))]
+                    pose_winner = pose_list[distance.index(min(distance))]
                     rospy.loginfo("Found closest gripper: " + winner)
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                     rospy.logerr("Could not find transform.")
@@ -55,28 +56,22 @@ class GraspPlanner(Behaviour):
                     return [task_object, winner]
                 else:
                     # print(self.manipulation_cases.get(sentence, "Not found"))
-                    GraspPose = geometry_msgs.msg.TransformStamped()
+                    GraspPose = TransformStamped()
                     GraspPose.header.frame_id = winner
-                    GraspPose.transform.translation.x = pose_list[distance.index(min(distance))][0][0]
-                    GraspPose.transform.translation.y = pose_list[distance.index(min(distance))][0][1]
-                    GraspPose.transform.translation.z = pose_list[distance.index(min(distance))][0][2]
-                    GraspPose.transform.rotation.x = pose_list[distance.index(min(distance))][1][0]
-                    GraspPose.transform.rotation.y = pose_list[distance.index(min(distance))][1][1]
-                    GraspPose.transform.rotation.z = pose_list[distance.index(min(distance))][1][2]
-                    GraspPose.transform.rotation.w = pose_list[distance.index(min(distance))][1][3]
+                    GraspPose.transform = list_to_transform(pose_winner[0], pose_winner[1])
 
                     return [GraspPose]
 
             elif len(object) == 2:
                 # More than one object with
                 rospy.logwarn("Not implemented yet. Returning empty.")
-                Pose = geometry_msgs.msg.PoseStamped()
-                return Pose
+                pose = PoseStamped()
+                return pose
 
             else:
                 rospy.logwarn("Too many objects. Returning empty.")
-                Pose = geometry_msgs.msg.PoseStamped()
-                return Pose
+                pose = PoseStamped()
+                return pose
 
         elif action == u"one hand support":
             pass
