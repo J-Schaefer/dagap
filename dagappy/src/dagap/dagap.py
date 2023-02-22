@@ -11,6 +11,7 @@ from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
 from dagap.tree.opm.opm import OPM
 import tf
+from dagap.utils.tfwrapper import *
 
 
 class DAGAP:
