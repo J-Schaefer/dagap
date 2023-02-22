@@ -1,6 +1,7 @@
+string reference_frame
 OPMObjectQuery[] object_list
-geometry_msgs/Pose current_location
 
 ---
 
-geometry_msgs/TransformStamped[] grasp_pose
+string next_object
+string hand
