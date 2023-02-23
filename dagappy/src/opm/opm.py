@@ -37,10 +37,11 @@ class OPM:
         objects = [elem[0] for elem in object_information
                    if elem[0] != 'robot']
         sequence = objects
-        coordinates = {elem[0]: elem[1] for elem in object_information
-                       if elem in objects}
-        start_coordinates = [elem[1] for elem in object_information
+        coordinates = {elem[0]: elem[1][0] for elem in object_information
+                       if elem[0] in objects}
+        start_coordinates = [elem[1][0] for elem in object_information
                              if elem[0] == 'robot']
+        start_coordinates = start_coordinates * 2
         containment = []
 
         # set category parameters
@@ -63,11 +64,13 @@ class OPM:
 
         coord_index = 0
 
-        new_coords, new_start_coords = self.filter_for_dimension(self,
-                                                                 coordinates,
-                                                                 start_coordinates,
-                                                                 dimension)
-
+        #new_coords, new_start_coords = self.filter_for_dimension(coordinates,                                                            coordinates,
+        #                                                         start_coordinates)
+        
+        new_coords = {k: v[:-1] for k, v in coordinates.items()}
+        
+        new_start_coords = [coords[:-1] for coords in start_coordinates]
+        
         while i < len(sequence):
             for obj in possible_items.keys():
                 try:
@@ -94,12 +97,12 @@ class OPM:
             #     del possible_items[sequence[i]]
 
             # coord_index += 1
-            # i += 1
+            i += 1
 
             predicted_item = [elem for elem in object_information
                               if elem[0] == prediction]
 
-        return predicted_item
+        return predicted_item[0]
 
     def filter_for_dimension(self, coordinates, start_coordinates,
                              dimension=2):
@@ -124,8 +127,8 @@ class OPM:
             List with filtered start coordinates.
         '''
 
-        new_coords = {}
-        new_start_coords = []
+        print('filter: coords ', coordinates)
+        print('filter: start ', start_coordinates)
 
         new_coords = {key: value[:-1] for key, value in coordinates.items()}
         new_start_coords = [x[:-1] for x in start_coordinates]
