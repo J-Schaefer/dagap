@@ -63,7 +63,11 @@ class DAGAP:
         lst = req.object_list
         reference_frame = req.reference_frame
 
-        next_object = self.opm.predict_next_action(lst)
+        opm_list = []
+        for obj in lst:
+            opm_list.append([obj.Object, pose_to_list(obj.object_location)])
+
+        next_object = self.opm.predict_next_action(opm_list)
 
         next_grasp = self.grasp_planner.decide(object=next_object,
                                                action=u"one hand task",

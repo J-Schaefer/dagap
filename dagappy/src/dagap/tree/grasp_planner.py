@@ -22,7 +22,7 @@ class GraspPlanner(Behaviour):
         :return:
         """
         if action == u"one hand task":
-            if len(object) == 1:
+            # if len(object) == 1:
                 # start to perform one handed task
                 # check distance to estimate which hand to use
 
@@ -32,23 +32,37 @@ class GraspPlanner(Behaviour):
                                            object[1][1],
                                            rospy.Time.now(),
                                            object[0],
-                                           reference_frame)
-                    task_object = object[0]
+                                           u"iai_kitchen/" + reference_frame)
+                    task_object = [object[0]]
                 else:
-                    task_object = object[0]
+                    task_object = object
 
                 try:
-                    rospy.loginfo("Calculating distance to " + task_object)  # TODO: add prints for more objects
-                    pose_list = []
-                    distance = []
-                    for gripper in robot.gripper_list:
-                        # FIXME: get tf prefix and concatenate, right now frame cannot be found
-                        (trans, rot) = self.tfl.lookupTransform(gripper, task_object, rospy.Time(0))
-                        pose_list.append([trans, rot])
-                        distance.append(norm(trans))
-                    winner = robot.gripper_list[distance.index(min(distance))]
-                    pose_winner = pose_list[distance.index(min(distance))]
-                    rospy.loginfo("Found closest gripper: " + winner)
+                    if len(task_object) == 1:
+                    # start to perform one handed task
+                    # check distance to estimate which hand to use
+                        frame = task_object[0]
+                        rospy.loginfo("Calculating distance to " + frame)  # TODO: add prints for more objects
+                        pose_list = []
+                        distance = []
+                        for gripper in robot.gripper_list:
+                            # FIXME: get tf prefix and concatenate, right now frame cannot be found
+                            (trans, rot) = self.tfl.lookupTransform(gripper, frame, rospy.Time(0))
+                            pose_list.append([trans, rot])
+                            distance.append(norm(trans))
+                        winner = robot.gripper_list[distance.index(min(distance))]
+                        pose_winner = pose_list[distance.index(min(distance))]
+                        rospy.loginfo("Found closest gripper: " + winner)
+                    elif len(task_object) == 2:
+                        # More than one object with
+                        rospy.logwarn("Not implemented yet. Returning empty.")
+                        pose = PoseStamped()
+                        return pose
+
+                    else:
+                        rospy.logwarn("Too many objects. Returning empty.")
+                        pose = PoseStamped()
+                        return pose
                 except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                     rospy.logerr("Could not find transform.")
 
@@ -62,16 +76,7 @@ class GraspPlanner(Behaviour):
 
                     return [GraspPose]
 
-            elif len(object) == 2:
-                # More than one object with
-                rospy.logwarn("Not implemented yet. Returning empty.")
-                pose = PoseStamped()
-                return pose
 
-            else:
-                rospy.logwarn("Too many objects. Returning empty.")
-                pose = PoseStamped()
-                return pose
 
         elif action == u"one hand support":
             pass

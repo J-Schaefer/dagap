@@ -29,6 +29,7 @@ if __name__ == "__main__":
     point = Point(1, 2, 3)
     pose_as_list = point_to_list(point)
     object_spawning_poses = [
+                             OPMObjectQuery("robot", list_to_pose([0, 0, 0], [0, 0, 0, 1])),
                              OPMObjectQuery("breakfast-cereal", list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1])),
                              OPMObjectQuery("cup", list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1])),
                              OPMObjectQuery("bowl", list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1])),
