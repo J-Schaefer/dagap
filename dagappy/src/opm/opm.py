@@ -71,7 +71,7 @@ class OPM:
         
         new_start_coords = [coords[:-1] for coords in start_coordinates]
         
-        while i < len(sequence):
+        while i < 1:
             for obj in possible_items.keys():
                 try:
                     position = tuple(new_start_coords[coord_index])
