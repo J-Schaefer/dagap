@@ -1,15 +1,13 @@
-import geometry_msgs.msg
 import rospy
 
-import dagap_msgs.srv
-from dagap_msgs.srv import GetGraspPose, GetOPMSortedList, GetNextOPMObject
-# from dagap.sample import SampleGrasp
+from dagap.sample import SampleGrasp
 from py_trees import Sequence, Selector, BehaviourTree, Blackboard
 from dagap.tree.mesher import Mesher
 from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
 from opm.opm import OPM
+
 from dagap_msgs.srv import *
 from dagap_msgs.msg import *
 from dagap.utils.tfwrapper import *
