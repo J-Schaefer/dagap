@@ -9,8 +9,9 @@ from dagap.tree.mesher import Mesher
 from dagap.tree.nl_module import NLModule
 from dagap.tree.grasp_planner import GraspPlanner
 from dagap.tree.robot import Robot
-from dagap.tree.opm.opm import OPM
-import tf
+from opm.opm import OPM
+from dagap_msgs.srv import *
+from dagap_msgs.msg import *
 from dagap.utils.tfwrapper import *
 
 
