@@ -17,6 +17,7 @@ set(MSG_DEPS
 find_package(catkin REQUIRED COMPONENTS
   ${MSG_DEPS}
   rospy
+  giskardpy
 )
 
 

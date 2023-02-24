@@ -15,9 +15,8 @@ def opm_dagap_client(reference_frame, object_list):
     try:
         call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
         srv = GetNextOPMObjectRequest(reference_frame, object_list)
-        res = call_common_service(srv)
-        print("Received answer.")
-        return res
+        response = call_common_service(srv)
+        return response
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
 
@@ -38,4 +37,5 @@ if __name__ == "__main__":
                             ]
     res = opm_dagap_client(reference_frame=frame,
                            object_list=object_spawning_poses)
-    # print()
+    print("Received answer:")
+    print(res)
