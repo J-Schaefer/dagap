@@ -53,8 +53,18 @@ class DAGAP:
 
     # Query to only query OPM
     def cb_opm_service(self, req):
-        # TODO: add service to get sorted list from OPM
-        pass
+        rospy.loginfo("Received OPM request.")
+
+        lst = req.object_list
+
+        opm_list = []
+        for obj in lst:
+            opm_list.append([obj.Object, pose_to_list(obj.object_location)])
+
+        next_object = self.opm.predict_next_action(opm_list)
+
+        res = dagap_msgs.srv.GetOPMSortedListResponse(next_object[0])
+        return res
 
     # Query for next object and how to grasp
     def cb_common_service_query(self, req):

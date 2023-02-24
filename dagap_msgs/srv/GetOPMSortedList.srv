@@ -1,6 +1,5 @@
 OPMObjectQuery[] object_list
-geometry_msgs/Pose current_location
 
 ---
 
-OPMObjectQuery[] sorted_list
+string next_object
