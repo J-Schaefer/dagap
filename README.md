@@ -24,6 +24,12 @@ source ../devel/setup.bash
 roslaunch dagappy dagap.launch
 ```
 
+If the objects are referenced to the kitchen, please also launch the kitchen:
+
+```bash
+roslaunch iai_kitchen kitchen_obj_bringup.launch
+```
+
 ## Call the Service
 
 The launch file launches three services that allow the user to call DAGAP, OPM and both together:
