@@ -19,12 +19,14 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>dagap_msgs</build_depend>
   <build_depend>giskardpy</build_depend>
+  <build_depend>py_trees</build_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>dagap_msgs</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>giskardpy</exec_depend>
+  <exec_depend>py_trees</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
