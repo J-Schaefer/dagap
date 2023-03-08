@@ -20,14 +20,28 @@ source ../devel/setup.bash
 
 ## Run the ROS Service
 
+In order to have a tf tree, please launch a robot simulation or the real robot. For example:
+
 ```bash
-roslaunch dagappy dagap.launch
+roslaunch iai_pr2_sim ros_control_sim_with_base.launch
 ```
 
-If the objects are referenced to the kitchen, please also launch the kitchen:
+or
+
+```bash
+roslaunch giskardpy giskardpy_pr2_standalone.launch
+```
+
+If you want to use the kitchen or the objects are referenced to the kitchen, please also launch the kitchen bringup:
 
 ```bash
 roslaunch iai_kitchen kitchen_obj_bringup.launch
+```
+
+Then start the dagap launch file:
+
+```bash
+roslaunch dagappy dagap.launch
 ```
 
 ## Call the Service
