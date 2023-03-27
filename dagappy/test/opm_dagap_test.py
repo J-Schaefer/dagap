@@ -24,9 +24,7 @@ def opm_dagap_client(reference_frame, object_list):
 if __name__ == "__main__":
     print("Starting test")
     frame = "sink_area_surface"
-    print("Finished cleanly.")
-    point = Point(1, 2, 3)
-    pose_as_list = point_to_list(point)
+
     object_spawning_poses = [
                              OPMObjectQuery("robot", list_to_pose([0, 0, 0], [0, 0, 0, 1])),
                              OPMObjectQuery("breakfast-cereal", list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1])),
@@ -39,3 +37,4 @@ if __name__ == "__main__":
                            object_list=object_spawning_poses)
     print("Received answer:")
     print(res)
+    print("Finished cleanly.")

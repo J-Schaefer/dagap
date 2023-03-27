@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   ${MSG_DEPS}
   rospy
   giskardpy
+  py_trees
 )
 
 
