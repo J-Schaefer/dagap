@@ -4,5 +4,4 @@
     ((:module "src"
               :components
               ((:file "package")
-               (:file "fibonacci-server" :depends-on ("package"))
-               (:file "fibonacci-client" :depends-on ("package"))))))
+               (:file "dagap-demo" :depends-on ("package"))))))
