@@ -16,3 +16,5 @@
 (:milk . ((0.07 -0.35 0.1) (0 0 0 1)))))
 "Relative poses on sink area")
 
+(defun start-demo ()
+  (roslisp:ros-info () "Starting DAGAP demo." ()))
