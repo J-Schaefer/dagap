@@ -18,6 +18,7 @@ from pycram.language import macros, par
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
+from pycram.designators.object_designator import *
 
 def opm_dagap_client(reference_frame, object_list):
     rospy.wait_for_service('dagap_opm_query')
@@ -31,8 +32,10 @@ def opm_dagap_client(reference_frame, object_list):
 
 
 if __name__ == "__main__":
-    print("Starting test")
+    print("Starting demo")
     frame = "sink_area_surface"
+
+    # objects =
 
     object_spawning_poses = [
                              OPMObjectQuery("robot", list_to_pose([0, 0, 0], [0, 0, 0, 1])),
@@ -49,24 +52,50 @@ if __name__ == "__main__":
 
     plane = Object("floor", "environment", "plane.urdf", world=world)
     # plane.set_color([0, 0, 0, 1])
-    # Action designator example from notebook
-    # makin a simple pouring plan
-    from pycram.designators.object_designator import *
 
     # spawn kitchen
     kitchen = Object("kitchen", "environment", "kitchen.urdf")
     # kitchen.set_color([0.2, 0, 0.4, 0.6])
     kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
-    # spawn Milkbox
-    milk = Object("milk", "milk", "milk.stl", Pose([1.6, 1, 0.90]))
-    milk_desig = ObjectDesignatorDescription(names=["milk"])
 
-    # spawn bowl
-    bowl = Object("bowl", "bowl", "bowl.stl", Pose([1.6, 1, 0.90]))
-    bowl_desig = ObjectDesignatorDescription(names=["bowl"])
+    # Spawn breakfast cereal
+    breakfast_cereal = Object(object_spawning_poses[1].Object,
+                              object_spawning_poses[1].Object,
+                              "breakfast_cereal.stl",
+                              Pose(object_spawning_poses[1].object_location.position,
+                                   object_spawning_poses[1].object_location.orientation))
+    breakfast_cereal_desig = ObjectDesignatorDescription(names=[object_spawning_poses[1].Object])
+    # Spawn breakfast cereal
+    cup = Object(object_spawning_poses[2].Object,
+                 object_spawning_poses[2].Object,
+                 "../resources/cup.stl",
+                 Pose(object_spawning_poses[2].object_location.position,
+                      object_spawning_poses[2].object_location.orientation))
+    cup_desig = ObjectDesignatorDescription(names=[object_spawning_poses[2].Object])
+    # Spawn breakfast cereal
+    bowl = Object(object_spawning_poses[3].Object,
+                  object_spawning_poses[3].Object,
+                  "bowl.stl",
+                  Pose(object_spawning_poses[3].object_location.position,
+                       object_spawning_poses[3].object_location.orientation))
+    bowl_desig = ObjectDesignatorDescription(names=[object_spawning_poses[3].Object])
+    # Spawn breakfast cereal
+    spoon = Object(object_spawning_poses[4].Object,
+                   object_spawning_poses[4].Object,
+                   "spoon.stl",
+                   Pose(object_spawning_poses[4].object_location.position,
+                        object_spawning_poses[4].object_location.orientation))
+    spoon_desig = ObjectDesignatorDescription(names=[object_spawning_poses[4].Object])
+    # Spawn breakfast cereal
+    milk = Object(object_spawning_poses[5].Object,
+                  object_spawning_poses[5].Object,
+                  "milk.stl",
+                  Pose(object_spawning_poses[5].object_location.position,
+                       object_spawning_poses[5].object_location.orientation))
+    milk_desig = ObjectDesignatorDescription(names=[object_spawning_poses[5].Object])
 
     # spawn PR2
-    pr2 = Object("pr2", "robot", "pr2.urdf")
+    pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
     robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
     # Send request to DAGAP service
