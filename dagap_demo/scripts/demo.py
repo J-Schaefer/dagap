@@ -61,42 +61,42 @@ if __name__ == "__main__":
     # Spawn breakfast cereal
     breakfast_cereal = Object(object_spawning_poses[1].Object,
                               object_spawning_poses[1].Object,
-                              "breakfast_cereal.stl",
-                              Pose(object_spawning_poses[1].object_location.position,
-                                   object_spawning_poses[1].object_location.orientation,
-                                   frame=frame))
+                              path="breakfast_cereal.stl",
+                              pose=Pose(point_to_list(object_spawning_poses[1].object_location.position),
+                                        quaternion_to_list(object_spawning_poses[1].object_location.orientation),
+                                        frame=frame))
     breakfast_cereal_desig = ObjectDesignatorDescription(names=[object_spawning_poses[1].Object])
     # Spawn breakfast cereal
     cup = Object(object_spawning_poses[2].Object,
                  object_spawning_poses[2].Object,
-                 "../resources/cup.stl",
-                 Pose(object_spawning_poses[2].object_location.position,
-                      object_spawning_poses[2].object_location.orientation,
-                      frame=frame))
+                 path="../resources/cup.stl",
+                 pose=Pose(point_to_list(object_spawning_poses[2].object_location.position),
+                           quaternion_to_list(object_spawning_poses[2].object_location.orientation),
+                           frame=frame))
     cup_desig = ObjectDesignatorDescription(names=[object_spawning_poses[2].Object])
     # Spawn breakfast cereal
     bowl = Object(object_spawning_poses[3].Object,
                   object_spawning_poses[3].Object,
-                  "bowl.stl",
-                  Pose(object_spawning_poses[3].object_location.position,
-                       object_spawning_poses[3].object_location.orientation,
-                       frame=frame))
+                  path="bowl.stl",
+                  pose=Pose(point_to_list(object_spawning_poses[3].object_location.position),
+                            quaternion_to_list(object_spawning_poses[3].object_location.orientation),
+                            frame=frame))
     bowl_desig = ObjectDesignatorDescription(names=[object_spawning_poses[3].Object])
     # Spawn breakfast cereal
     spoon = Object(object_spawning_poses[4].Object,
                    object_spawning_poses[4].Object,
-                   "spoon.stl",
-                   Pose(object_spawning_poses[4].object_location.position,
-                        object_spawning_poses[4].object_location.orientation,
-                        frame=frame))
+                   path="spoon.stl",
+                   pose=Pose(point_to_list(object_spawning_poses[4].object_location.position),
+                             quaternion_to_list(object_spawning_poses[4].object_location.orientation),
+                             frame=frame))
     spoon_desig = ObjectDesignatorDescription(names=[object_spawning_poses[4].Object])
     # Spawn breakfast cereal
     milk = Object(object_spawning_poses[5].Object,
                   object_spawning_poses[5].Object,
-                  "milk.stl",
-                  Pose(object_spawning_poses[5].object_location.position,
-                       object_spawning_poses[5].object_location.orientation,
-                       frame=frame))
+                  path="milk.stl",
+                  pose=Pose(point_to_list(object_spawning_poses[5].object_location.position),
+                            quaternion_to_list(object_spawning_poses[5].object_location.orientation),
+                            frame=frame))
     milk_desig = ObjectDesignatorDescription(names=[object_spawning_poses[5].Object])
 
     # spawn PR2
