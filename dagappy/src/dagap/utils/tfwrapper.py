@@ -1,4 +1,19 @@
-from geometry_msgs.msg import Point, Pose, Quaternion, Vector3, Transform
+import rospy
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, Vector3, Transform, TransformStamped
+from tf2_ros import Buffer, TransformListener
+from tf2_geometry_msgs import do_transform_pose
+
+tf_buffer: Buffer = None
+
+def init(tf_buffer_size=15):
+    global tf_buffer
+    tf_buffer = Buffer(rospy.Duration(tf_buffer_size))
+    tf_listener = TransformListener(tf_buffer)
+
+
+def get_tf_buffer():
+    global tf_buffer
+    return tf_buffer
 
 
 def list_to_point(point: list):
@@ -39,3 +54,18 @@ def vector3_to_list(vector: Vector3):
 
 def transform_to_list(transform: Transform):
     return [vector3_to_list(transform.translation), quaternion_to_list(transform.rotation)]
+
+
+def lookup_transform(target_frame, source_frame, time=0, timeout=5.0) -> TransformStamped:
+    local_tf_buffer = get_tf_buffer()
+    return local_tf_buffer.lookup_transform(target_frame=target_frame,
+                                            source_frame=source_frame,
+                                            time=rospy.Time(time),
+                                            timeout=rospy.Duration(timeout))
+
+
+def transform_pose(pose, target_frame, source_frame) -> Pose:
+    pose_stamped = PoseStamped()
+    pose_stamped.pose = pose
+    pose_stamped.header.frame_id = source_frame
+    return do_transform_pose(pose_stamped, lookup_transform(target_frame, source_frame))

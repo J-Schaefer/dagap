@@ -19,6 +19,7 @@ from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
 from pycram.designators.object_designator import *
+from geometry_msgs.msg import Pose
 
 def opm_dagap_client(reference_frame, object_list):
     rospy.wait_for_service('dagap_opm_query')
@@ -34,16 +35,32 @@ def opm_dagap_client(reference_frame, object_list):
 if __name__ == "__main__":
     print("Starting demo")
     frame = "sink_area_surface"
+    init()  # call tfwrapper init()
 
-    # objects =
+    object_spawning_poses_sink = [
+        list_to_pose([0, 0, 0], [0, 0, 0, 1]), # robot, position empty
+        list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]), # breakfast-cereal
+        list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1]), # cup
+        list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1]), # bowl
+        list_to_pose([0.15, -0.4, -0.05], [0, 0, 0, 1]), # spoon
+        list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1]) # milk
+    ]
+
+    object_spawning_poses_map = [geometry_msgs.msg.Pose]
+
+    # transform_sink_map = lookup_transform(frame, u'map')
+
+    element: geometry_msgs.msg.Pose
+    for element in object_spawning_poses_sink:
+        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/'+frame))
 
     object_spawning_poses = [
-                             OPMObjectQuery("robot", list_to_pose([0, 0, 0], [0, 0, 0, 1])),
-                             OPMObjectQuery("breakfast-cereal", list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1])),
-                             OPMObjectQuery("cup", list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1])),
-                             OPMObjectQuery("bowl", list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1])),
-                             OPMObjectQuery("spoon", list_to_pose([0.15, -0.4, -0.05], [0, 0, 0, 1])),
-                             OPMObjectQuery("milk", list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1]))
+                             OPMObjectQuery("robot", object_spawning_poses_sink[0]),
+                             OPMObjectQuery("breakfast-cereal", object_spawning_poses_sink[1]),
+                             OPMObjectQuery("cup", object_spawning_poses_sink[2]),
+                             OPMObjectQuery("bowl", object_spawning_poses_sink[3]),
+                             OPMObjectQuery("spoon", object_spawning_poses_sink[4]),
+                             OPMObjectQuery("milk", object_spawning_poses_sink[5])
                             ]
 
     # Set up the bullet world
