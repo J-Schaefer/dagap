@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 set(MSG_FILES
    FILES
    OPMObjectQuery.msg
+   KitchenObjectLocation.msg
 )
 
 ## Generate services in the 'srv' folder

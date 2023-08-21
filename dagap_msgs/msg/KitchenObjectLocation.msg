@@ -1,0 +1,2 @@
+string Object
+geometry_msgs/PoseStamped object_location
