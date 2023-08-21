@@ -64,7 +64,7 @@ def lookup_transform(target_frame, source_frame, time=0, timeout=5.0) -> Transfo
                                             timeout=rospy.Duration(timeout))
 
 
-def transform_pose(pose, target_frame, source_frame) -> Pose:
+def transform_pose(pose, target_frame, source_frame) -> PoseStamped:
     pose_stamped = PoseStamped()
     pose_stamped.pose = pose
     pose_stamped.header.frame_id = source_frame
