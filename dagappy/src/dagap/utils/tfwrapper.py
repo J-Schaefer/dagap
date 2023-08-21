@@ -40,8 +40,16 @@ def point_to_list(point: Point):
     return [point.x, point.y, point.z]
 
 
+def point_to_tuple(point: Point) -> tuple:
+    return point.x, point.y, point.z
+
+
 def quaternion_to_list(quaternion: Quaternion):
     return [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+
+
+def quaternion_to_tuple(quaternion: Quaternion) -> tuple:
+    return quaternion.x, quaternion.y, quaternion.z, quaternion.w
 
 
 def pose_to_list(pose: Pose):
