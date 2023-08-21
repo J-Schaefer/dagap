@@ -60,5 +60,6 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    scripts/dagap_node.py
+   scripts/object_frame_broadcaster.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

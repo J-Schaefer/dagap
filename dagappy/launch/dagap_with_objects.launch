@@ -1,0 +1,11 @@
+<launch>
+
+    <node pkg="dagappy" type="dagap_node.py"
+          name="dagap" output="screen">
+    </node>
+
+    <node pkg="dagappy" type="object_frame_broadcaster.py"
+          name="object_frame_broadcaster" output="screen">
+    </node>
+
+</launch>

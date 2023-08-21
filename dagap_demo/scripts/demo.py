@@ -6,6 +6,8 @@ import sys
 from typing import List, Type
 
 import rospy
+
+import dagap_msgs.msg
 from dagap_msgs.srv import *
 from dagap_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion
@@ -21,6 +23,7 @@ from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
 from pycram.designators.object_designator import *
+
 
 def opm_dagap_client(reference_frame, object_list):
     rospy.wait_for_service('dagap_opm_query')
@@ -56,15 +59,24 @@ if __name__ == "__main__":
 
     # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
     for element in object_spawning_poses_sink:
-        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/' + reference_frame))
+        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/'+reference_frame))
 
-    object_spawning_poses: List[OPMObjectQuery] = [
+    query_object_list_map: List[OPMObjectQuery] = [
                                                    OPMObjectQuery("robot", object_spawning_poses_sink[0]),
                                                    OPMObjectQuery("breakfast-cereal", object_spawning_poses_map[1].pose),
                                                    OPMObjectQuery("cup", object_spawning_poses_map[2].pose),
                                                    OPMObjectQuery("bowl", object_spawning_poses_map[3].pose),
                                                    OPMObjectQuery("spoon", object_spawning_poses_map[4].pose),
                                                    OPMObjectQuery("milk", object_spawning_poses_map[5].pose)
+                                                  ]
+
+    query_object_list_sink: List[OPMObjectQuery] = [
+                                                   OPMObjectQuery("robot", object_spawning_poses_sink[0]),
+                                                   OPMObjectQuery("breakfast-cereal", object_spawning_poses_sink[1]),
+                                                   OPMObjectQuery("cup", object_spawning_poses_sink[2]),
+                                                   OPMObjectQuery("bowl", object_spawning_poses_sink[3]),
+                                                   OPMObjectQuery("spoon", object_spawning_poses_sink[4]),
+                                                   OPMObjectQuery("milk", object_spawning_poses_sink[5])
                                                   ]
 
     # Set up the bullet world
@@ -80,54 +92,74 @@ if __name__ == "__main__":
     kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
     # Spawn breakfast cereal
-    breakfast_cereal = Object(object_spawning_poses[1].Object,
-                              object_spawning_poses[1].Object,
+    breakfast_cereal = Object(query_object_list_map[1].Object,
+                              query_object_list_map[1].Object,
                               path="breakfast_cereal.stl",
-                              pose=Pose(point_to_list(object_spawning_poses[1].object_location.position),
-                                        quaternion_to_list(object_spawning_poses[1].object_location.orientation),
-                                        frame=reference_frame))
-    breakfast_cereal_desig = ObjectDesignatorDescription(names=[object_spawning_poses[1].Object])
+                              pose=Pose(point_to_list(query_object_list_map[1].object_location.position),
+                                        quaternion_to_list(query_object_list_map[1].object_location.orientation),
+                                        frame="iai_kitchen/"+reference_frame))
+    breakfast_cereal_desig = ObjectDesignatorDescription(names=[query_object_list_map[1].Object])
     # Spawn cup
-    cup = Object(object_spawning_poses[2].Object,
-                 object_spawning_poses[2].Object,
+    cup = Object(query_object_list_map[2].Object,
+                 query_object_list_map[2].Object,
                  path="../resources/cup.stl",
-                 pose=Pose(point_to_list(object_spawning_poses[2].object_location.position),
-                           quaternion_to_list(object_spawning_poses[2].object_location.orientation),
-                           frame=reference_frame))
-    cup_desig = ObjectDesignatorDescription(names=[object_spawning_poses[2].Object])
+                 pose=Pose(point_to_list(query_object_list_map[2].object_location.position),
+                           quaternion_to_list(query_object_list_map[2].object_location.orientation),
+                           frame="iai_kitchen/"+reference_frame))
+    cup_desig = ObjectDesignatorDescription(names=[query_object_list_map[2].Object])
     # Spawn bowl
-    bowl = Object(object_spawning_poses[3].Object,
-                  object_spawning_poses[3].Object,
+    bowl = Object(query_object_list_map[3].Object,
+                  query_object_list_map[3].Object,
                   path="bowl.stl",
-                  pose=Pose(point_to_list(object_spawning_poses[3].object_location.position),
-                            quaternion_to_list(object_spawning_poses[3].object_location.orientation),
-                            frame=reference_frame))
-    bowl_desig = ObjectDesignatorDescription(names=[object_spawning_poses[3].Object])
+                  pose=Pose(point_to_list(query_object_list_map[3].object_location.position),
+                            quaternion_to_list(query_object_list_map[3].object_location.orientation),
+                            frame="iai_kitchen/"+reference_frame))
+    bowl_desig = ObjectDesignatorDescription(names=[query_object_list_map[3].Object])
     # Spawn spoon
-    spoon = Object(object_spawning_poses[4].Object,
-                   object_spawning_poses[4].Object,
+    spoon = Object(query_object_list_map[4].Object,
+                   query_object_list_map[4].Object,
                    path="spoon.stl",
-                   pose=Pose(point_to_list(object_spawning_poses[4].object_location.position),
-                             quaternion_to_list(object_spawning_poses[4].object_location.orientation),
-                             frame=reference_frame))
-    spoon_desig = ObjectDesignatorDescription(names=[object_spawning_poses[4].Object])
+                   pose=Pose(point_to_list(query_object_list_map[4].object_location.position),
+                             quaternion_to_list(query_object_list_map[4].object_location.orientation),
+                             frame="iai_kitchen/"+reference_frame))
+    spoon_desig = ObjectDesignatorDescription(names=[query_object_list_map[4].Object])
     # Spawn milk
-    milk = Object(object_spawning_poses[5].Object,
-                  object_spawning_poses[5].Object,
+    milk = Object(query_object_list_map[5].Object,
+                  query_object_list_map[5].Object,
                   path="milk.stl",
-                  pose=Pose(point_to_list(object_spawning_poses[5].object_location.position),
-                            quaternion_to_list(object_spawning_poses[5].object_location.orientation),
-                            frame=reference_frame))
-    milk_desig = ObjectDesignatorDescription(names=[object_spawning_poses[5].Object])
+                  pose=Pose(point_to_list(query_object_list_map[5].object_location.position),
+                            quaternion_to_list(query_object_list_map[5].object_location.orientation),
+                            frame="iai_kitchen/"+reference_frame))
+    milk_desig = ObjectDesignatorDescription(names=[query_object_list_map[5].Object])
 
     # Spawn PR2 robot
     pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
     robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
+    # Broadcast all object frames
+    pub = rospy.Publisher(name=u"kitchen_item_frames", data_class=dagap_msgs.msg.KitchenObjectLocation, queue_size=10)
+    element: OPMObjectQuery
+    for element in query_object_list_sink:
+        rospy.loginfo("Demo: checking pose for object: {}".format(element.Object))
+        if not element.Object=="robot":
+            rospy.loginfo("Demo: Attempting broadcast of tf for object: {}".format(element.Object))
+
+            message: dagap_msgs.msg.KitchenObjectLocation
+
+            # Set pose in current reference frame (iai_kitchen/sink_area_surface)
+            current_element_posestamped = geometry_msgs.msg.PoseStamped()
+            current_element_posestamped.header.frame_id = "iai_kitchen/" + reference_frame
+            current_element_posestamped.pose = element.object_location
+
+            message = dagap_msgs.msg.KitchenObjectLocation()
+            message.Object = element.Object
+            message.object_location = current_element_posestamped
+            pub.publish(message)
+
     with simulated_robot:
         # Send request to DAGAP service
         res = opm_dagap_client(reference_frame=reference_frame,
-                               object_list=object_spawning_poses)
-        print("Received answer:")
+                               object_list=query_object_list_map)
+        rospy.loginfo("Received answer:")
         print(res)
-        print("Finished cleanly.")
+        rospy.loginfo("Finished cleanly.")
