@@ -35,7 +35,7 @@ def opm_dagap_client(reference_frame, object_list):
 
 if __name__ == "__main__":
     print("Starting demo")
-    frame = "sink_area_surface"
+    reference_frame = "sink_area_surface"
     init()  # call tfwrapper init()
 
     object_spawning_poses_sink: List[Pose] = [
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
     for element in object_spawning_poses_sink:
-        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/'+frame))
+        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/' + reference_frame))
 
     object_spawning_poses: List[OPMObjectQuery] = [
                                                    OPMObjectQuery("robot", object_spawning_poses_sink[0]),
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     plane = Object("floor", "environment", "plane.urdf", world=world)
     # plane.set_color([0, 0, 0, 1])
 
-    # spawn kitchen
+    # Spawn kitchen
     kitchen = Object("kitchen", "environment", "kitchen.urdf")
     # kitchen.set_color([0.2, 0, 0.4, 0.6])
     kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
@@ -85,48 +85,49 @@ if __name__ == "__main__":
                               path="breakfast_cereal.stl",
                               pose=Pose(point_to_list(object_spawning_poses[1].object_location.position),
                                         quaternion_to_list(object_spawning_poses[1].object_location.orientation),
-                                        frame=frame))
+                                        frame=reference_frame))
     breakfast_cereal_desig = ObjectDesignatorDescription(names=[object_spawning_poses[1].Object])
-    # Spawn breakfast cereal
+    # Spawn cup
     cup = Object(object_spawning_poses[2].Object,
                  object_spawning_poses[2].Object,
                  path="../resources/cup.stl",
                  pose=Pose(point_to_list(object_spawning_poses[2].object_location.position),
                            quaternion_to_list(object_spawning_poses[2].object_location.orientation),
-                           frame=frame))
+                           frame=reference_frame))
     cup_desig = ObjectDesignatorDescription(names=[object_spawning_poses[2].Object])
-    # Spawn breakfast cereal
+    # Spawn bowl
     bowl = Object(object_spawning_poses[3].Object,
                   object_spawning_poses[3].Object,
                   path="bowl.stl",
                   pose=Pose(point_to_list(object_spawning_poses[3].object_location.position),
                             quaternion_to_list(object_spawning_poses[3].object_location.orientation),
-                            frame=frame))
+                            frame=reference_frame))
     bowl_desig = ObjectDesignatorDescription(names=[object_spawning_poses[3].Object])
-    # Spawn breakfast cereal
+    # Spawn spoon
     spoon = Object(object_spawning_poses[4].Object,
                    object_spawning_poses[4].Object,
                    path="spoon.stl",
                    pose=Pose(point_to_list(object_spawning_poses[4].object_location.position),
                              quaternion_to_list(object_spawning_poses[4].object_location.orientation),
-                             frame=frame))
+                             frame=reference_frame))
     spoon_desig = ObjectDesignatorDescription(names=[object_spawning_poses[4].Object])
-    # Spawn breakfast cereal
+    # Spawn milk
     milk = Object(object_spawning_poses[5].Object,
                   object_spawning_poses[5].Object,
                   path="milk.stl",
                   pose=Pose(point_to_list(object_spawning_poses[5].object_location.position),
                             quaternion_to_list(object_spawning_poses[5].object_location.orientation),
-                            frame=frame))
+                            frame=reference_frame))
     milk_desig = ObjectDesignatorDescription(names=[object_spawning_poses[5].Object])
 
-    # spawn PR2
+    # Spawn PR2 robot
     pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
     robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
-    # Send request to DAGAP service
-    res = opm_dagap_client(reference_frame=frame,
-                           object_list=object_spawning_poses)
-    print("Received answer:")
-    print(res)
-    print("Finished cleanly.")
+    with simulated_robot:
+        # Send request to DAGAP service
+        res = opm_dagap_client(reference_frame=reference_frame,
+                               object_list=object_spawning_poses)
+        print("Received answer:")
+        print(res)
+        print("Finished cleanly.")
