@@ -7,7 +7,6 @@ from typing import List, Type
 
 import rospy
 
-import dagap_msgs.msg
 from dagap_msgs.srv import *
 from dagap_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion
@@ -23,7 +22,7 @@ from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
 from pycram.designators.object_designator import *
-
+from pycram.ros.tf_broadcaster import TFBroadcaster
 
 def opm_dagap_client(reference_frame, object_list):
     rospy.wait_for_service('dagap_opm_query')
@@ -62,21 +61,21 @@ if __name__ == "__main__":
         object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/'+reference_frame))
 
     query_object_list_map: List[OPMObjectQuery] = [
-                                                   OPMObjectQuery("robot", object_spawning_poses_sink[0]),
-                                                   OPMObjectQuery("breakfast-cereal", object_spawning_poses_map[1].pose),
-                                                   OPMObjectQuery("cup", object_spawning_poses_map[2].pose),
-                                                   OPMObjectQuery("bowl", object_spawning_poses_map[3].pose),
-                                                   OPMObjectQuery("spoon", object_spawning_poses_map[4].pose),
-                                                   OPMObjectQuery("milk", object_spawning_poses_map[5].pose)
+                                                   OPMObjectQuery(Object="robot", object_location=object_spawning_poses_sink[0]),
+                                                   OPMObjectQuery(Object="breakfast-cereal", object_location=object_spawning_poses_map[1].pose),
+                                                   OPMObjectQuery(Object="cup", object_location=object_spawning_poses_map[2].pose),
+                                                   OPMObjectQuery(Object="bowl", object_location=object_spawning_poses_map[3].pose),
+                                                   OPMObjectQuery(Object="spoon", object_location=object_spawning_poses_map[4].pose),
+                                                   OPMObjectQuery(Object="milk", object_location=object_spawning_poses_map[5].pose)
                                                   ]
 
     query_object_list_sink: List[OPMObjectQuery] = [
-                                                   OPMObjectQuery("robot", object_spawning_poses_sink[0]),
-                                                   OPMObjectQuery("breakfast-cereal", object_spawning_poses_sink[1]),
-                                                   OPMObjectQuery("cup", object_spawning_poses_sink[2]),
-                                                   OPMObjectQuery("bowl", object_spawning_poses_sink[3]),
-                                                   OPMObjectQuery("spoon", object_spawning_poses_sink[4]),
-                                                   OPMObjectQuery("milk", object_spawning_poses_sink[5])
+                                                   OPMObjectQuery(Object="robot", object_location=object_spawning_poses_sink[0]),
+                                                   OPMObjectQuery(Object="breakfast-cereal", object_location=object_spawning_poses_sink[1]),
+                                                   OPMObjectQuery(Object="cup", object_location=object_spawning_poses_sink[2]),
+                                                   OPMObjectQuery(Object="bowl", object_location=object_spawning_poses_sink[3]),
+                                                   OPMObjectQuery(Object="spoon", object_location=object_spawning_poses_sink[4]),
+                                                   OPMObjectQuery(Object="milk", object_location=object_spawning_poses_sink[5])
                                                   ]
 
     # Set up the bullet world
@@ -136,28 +135,43 @@ if __name__ == "__main__":
     pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
     robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
-    # Broadcast all object frames
-    pub = rospy.Publisher(name=u"kitchen_item_frames", data_class=dagap_msgs.msg.KitchenObjectLocation, queue_size=10)
-    element: OPMObjectQuery
-    for element in query_object_list_sink:
-        rospy.loginfo("Demo: checking pose for object: {}".format(element.Object))
-        if not element.Object=="robot":
-            rospy.loginfo("Demo: Attempting broadcast of tf for object: {}".format(element.Object))
+    tfbroadcaster = TFBroadcaster()
 
-            message: dagap_msgs.msg.KitchenObjectLocation
+    query_object_list_map[1].object_frame = "simulated/" + breakfast_cereal.get_link_tf_frame(link_name="").replace("/", "")
+    query_object_list_map[2].object_frame = "simulated/" + cup.get_link_tf_frame(link_name="").replace("/", "")
+    query_object_list_map[3].object_frame = "simulated/" + bowl.get_link_tf_frame(link_name="").replace("/", "")
+    query_object_list_map[4].object_frame = "simulated/" + spoon.get_link_tf_frame(link_name="").replace("/", "")
+    query_object_list_map[5].object_frame = "simulated/" + milk.get_link_tf_frame(link_name="").replace("/", "")
 
-            # Set pose in current reference frame (iai_kitchen/sink_area_surface)
-            current_element_posestamped = geometry_msgs.msg.PoseStamped()
-            current_element_posestamped.header.frame_id = "iai_kitchen/" + reference_frame
-            current_element_posestamped.pose = element.object_location
-
-            message = dagap_msgs.msg.KitchenObjectLocation()
-            message.Object = element.Object
-            message.object_location = current_element_posestamped
-            pub.publish(message)
+    # # Broadcast all object frames
+    # pub = rospy.Publisher(name=u"kitchen_item_frames", data_class=dagap_msgs.msg.KitchenObjectLocation, queue_size=10)
+    # element: OPMObjectQuery
+    # for element in query_object_list_sink:
+    #     rospy.loginfo("Demo: Checking pose for object: {}".format(element.Object))
+    #     if not element.Object=="robot":
+    #         rospy.loginfo("Demo: Publishing broadcast of tf for object: {}".format(element.Object))
+    #
+    #         message: dagap_msgs.msg.KitchenObjectLocation
+    #
+    #         # Set pose in current reference frame (iai_kitchen/sink_area_surface)
+    #         current_element_posestamped = geometry_msgs.msg.PoseStamped()
+    #         current_element_posestamped.header.frame_id = "iai_kitchen/" + reference_frame
+    #         current_element_posestamped.header.stamp = rospy.Time.now()
+    #         current_element_posestamped.pose = element.object_location
+    #
+    #         message = dagap_msgs.msg.KitchenObjectLocation()
+    #         message.Object = element.Object
+    #         message.object_location = current_element_posestamped
+    #         pub.publish(message)
+    #
+    # # Test one pose
+    # trans_stamped: geometry_msgs.msg.TransformStamped = lookup_transform(target_frame="bowl",
+    #                                                                      source_frame="iai_kitchen/sink_area_surface")
+    # rospy.loginfo("Got transform between bowl and iai_kitchen/sink_area_surface: ", trans_stamped.transform)
 
     with simulated_robot:
         # Send request to DAGAP service
+        rospy.set_param(param_name='robot_root', param_value="simulated/"+pr2.get_link_tf_frame(link_name=""))
         res = opm_dagap_client(reference_frame=reference_frame,
                                object_list=query_object_list_map)
         rospy.loginfo("Received answer:")

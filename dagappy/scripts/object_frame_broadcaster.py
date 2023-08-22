@@ -5,7 +5,9 @@ from dagap.utils.tfwrapper import point_to_tuple, quaternion_to_tuple
 import geometry_msgs
 import tf
 import dagap_msgs.msg
+from typing import List
 
+object_list: List[dagap_msgs.msg.KitchenObjectLocation] = []
 
 def update_object_frame(pose: geometry_msgs.msg.PoseStamped, parent_frame: str, frame_name: str):
     # Add tf broadcaster for objects
@@ -21,6 +23,7 @@ def update_object_frame(pose: geometry_msgs.msg.PoseStamped, parent_frame: str, 
 
 def callback_kitchen_objects(msg: dagap_msgs.msg.KitchenObjectLocation):
     rospy.loginfo("object_frame_broadcaster: Kitchen object tf broadcaster received message with object name: {}.".format(msg.Object))
+
     update_object_frame(pose=msg.object_location,
                         parent_frame=msg.object_location.header.frame_id,
                         frame_name=msg.Object)
@@ -33,3 +36,7 @@ if __name__ == '__main__':
                      data_class=dagap_msgs.msg.KitchenObjectLocation,
                      callback=callback_kitchen_objects)
     rospy.spin()
+
+    rate = rospy.Rate(10)  # 10hz
+    while not rospy.is_shutdown():
+        rate.sleep()

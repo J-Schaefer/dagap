@@ -14,6 +14,7 @@ class Robot:
         self.package_root = pathlib.Path(__file__).resolve().parents[3]
         self.model_path = self.package_root.joinpath("model")
         self.robot_description_file_path = self.model_path.joinpath("robot_description.xml")
+        self.tf_root: str = ""
 
         try:
             self.gripper_watcher = rospy.ServiceProxy('/giskard/get_group_info', GetGroupInfo)

@@ -1,2 +1,3 @@
 string Object
 geometry_msgs/Pose object_location
+string object_frame

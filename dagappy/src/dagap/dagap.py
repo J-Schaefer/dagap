@@ -67,7 +67,7 @@ class DAGAP:
         return res
 
     # Query for next object and how to grasp
-    def cb_common_service_query(self, req):
+    def cb_common_service_query(self, req: dagap_msgs.srv.GetNextOPMObjectRequest):
         rospy.loginfo("Received OPM/DAGAP request.")
 
         lst = req.object_list
@@ -78,12 +78,26 @@ class DAGAP:
             opm_list.append([obj.Object, pose_to_list(obj.object_location)])
 
         next_object = self.opm.predict_next_action(opm_list)
+        rospy.loginfo("Next object is {}.".format(next_object[0]))
+
+        next_object_frame: str = ""
+        element: dagap_msgs.msg.OPMObjectQuery
+        for element in lst:
+            if not element.Object == "robot":
+                if next_object[0] in element.Object:
+                    next_object_frame = element.object_frame
+
+        try:
+            self.robot.tf_root = rospy.get_param('robot_root')
+        except KeyError:
+            rospy.loginfo("DAGAP: Did not find robot_root. Assuming real robot.")
 
         next_grasp = self.grasp_planner.decide(object=next_object,
                                                action=u"one hand task",
                                                robot=self.robot,
                                                opm_action=True,
-                                               reference_frame=reference_frame)
+                                               reference_frame=reference_frame,
+                                               object_frame=next_object_frame)
         res = dagap_msgs.srv.GetNextOPMObjectResponse(next_grasp[0], next_grasp[1])
         return res
 
