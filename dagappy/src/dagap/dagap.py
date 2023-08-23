@@ -90,7 +90,7 @@ class DAGAP:
         try:
             self.robot.tf_root = rospy.get_param('robot_root')
         except KeyError:
-            rospy.loginfo("DAGAP: Did not find robot_root. Assuming real robot.")
+            rospy.loginfo("Did not find robot_root. Assuming real robot.")
 
         next_grasp = self.grasp_planner.decide(object=next_object,
                                                action=u"one hand task",
