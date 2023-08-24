@@ -26,6 +26,17 @@ from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram import designator
 
 
+def opm_dagap_client(reference_frame, object_list):
+    rospy.wait_for_service('dagap_opm_query')
+    try:
+        call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
+        srv = GetNextOPMObjectRequest(reference_frame, object_list)
+        response = call_common_service(srv)
+        return response
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+
+
 class PickAndPlaceDemo:
 
     def __init__(self):
@@ -169,16 +180,6 @@ class PickAndPlaceDemo:
         else:
             rospy.logwarn("Did not find transform")
 
-    def opm_dagap_client(self, reference_frame, object_list):
-        rospy.wait_for_service('dagap_opm_query')
-        try:
-            call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
-            srv = GetNextOPMObjectRequest(reference_frame, object_list)
-            response = call_common_service(srv)
-            return response
-        except rospy.ServiceException as e:
-            print("Service call failed: %s" % e)
-
     def get_designator_from_name(self, object_name: str):
         pass
 
@@ -189,16 +190,19 @@ class PickAndPlaceDemo:
         rospy.loginfo("Running demo.")
         with simulated_robot:
             # Send request to DAGAP service
-            rospy.set_param(param_name='robot_root', param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
-            res = Demo.opm_dagap_client(reference_frame=self.reference_frame,
-                                        object_list=self.query_object_list_map)
+            rospy.set_param(param_name='robot_root',
+                            param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
+            res = opm_dagap_client(reference_frame=self.reference_frame,
+                                   object_list=self.query_object_list_map)
             rospy.loginfo("Received answer:")
             print(res)
-            rospy.loginfo("Finished cleanly.")
+
+            ParkArmsAction([Arms.BOTH]).resolve().perform()
+            MoveTorsoAction([0.3]).resolve().perform()
 
 
 if __name__ == "__main__":
     print("Starting demo")
 
-    Demo = PickAndPlaceDemo()
-    Demo.run()
+    Demo = PickAndPlaceDemo()  # init demo and spawn objects
+    Demo.run()  # run demo
