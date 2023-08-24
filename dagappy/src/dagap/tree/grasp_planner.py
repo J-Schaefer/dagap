@@ -48,26 +48,31 @@ class GraspPlanner(Behaviour):
                     # start to perform one handed task
                     # check distance to estimate which hand to use
                     current_frame = task_object[0]
-                    rospy.loginfo("Calculating distance to frame " + current_frame)  # TODO: add prints for more objects
                     pose_list = []
                     distance = []
+                    gripper_list = []
+                    winner: str = ""
 
                     # Add tf_root for simulated robot in bullet world
+                    # use local gripper list and leave robot.gripper_list intact
                     if robot.tf_root:
-                        robot.gripper_list = ['{0}{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
+                        gripper_list = ['{0}{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
 
-                    for gripper in robot.gripper_list:
+                    for gripper in gripper_list:  # use local gripper list
                         # FIXME: get tf prefix and concatenate, right now frame cannot be found
+                        rospy.loginfo("Calculating distance from {} to {}".format(gripper,
+                                                                                  current_frame))
                         transform: TransformStamped = dagap_tf.lookup_transform(gripper, current_frame)
+                        rospy.loginfo("[{}]: Found transform".format(rospy.get_name()))
                         trans = transform.transform.translation
                         rot = transform.transform.rotation
                         pose_list.append([trans, rot])
                         distance.append(norm(dagap_tf.point_to_list(trans)))  # add distance of current gripper to object to list
 
                     min_index = distance.index(min(distance))
-                    winner = robot.gripper_list[min_index]  # get gripper with smallest distance
-                    pose_winner = pose_list[min_index]  # get pose with smallest distance
-                    rospy.loginfo(rospy.get_name(), "Found closest gripper: " + winner)
+                    winner = gripper_list[min_index]  # get gripper with the smallest distance
+                    pose_winner = pose_list[min_index]  # get pose with the smallest distance
+                    rospy.loginfo("[{}]: Found closest gripper: {}".format(rospy.get_name(), winner))
                 elif len(task_object) == 2:
                     # More than one object with
                     rospy.logwarn("Not implemented yet. Returning empty.")
@@ -82,7 +87,7 @@ class GraspPlanner(Behaviour):
                 rospy.logerr("Could not find transform.")
 
             if opm_action:
-                return [object_frame, winner]
+                return [object_frame, winner]  # in case of an error variable winner is is empty
             else:
                 # print(self.manipulation_cases.get(sentence, "Not found"))
                 GraspPose = TransformStamped()

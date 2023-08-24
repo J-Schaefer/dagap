@@ -10,7 +10,7 @@ import rospy
 from dagap_msgs.srv import *
 from dagap_msgs.msg import *
 from geometry_msgs.msg import Pose, Point, Quaternion
-from dagap.utils.tfwrapper import *
+import dagap.utils.tfwrapper as dagap_tf
 import pycram
 from pycram.bullet_world import BulletWorld, Object
 import pycram.bullet_world_reasoning as btr
@@ -38,15 +38,15 @@ def opm_dagap_client(reference_frame, object_list):
 if __name__ == "__main__":
     print("Starting demo")
     reference_frame = "sink_area_surface"
-    init()  # call tfwrapper init()
+    dagap_tf.init()  # call tfwrapper init()
 
     object_spawning_poses_sink: List[Pose] = [
-        list_to_pose([0, 0, 0], [0, 0, 0, 1]),  # robot, position empty
-        list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
-        list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1]),  # cup
-        list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1]),  # bowl
-        list_to_pose([0.15, -0.4, -0.05], [0, 0, 0, 1]),  # spoon
-        list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
+        dagap_tf.list_to_pose([0, 0, 0], [0, 0, 0, 1]),  # robot, position empty
+        dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
+        dagap_tf.list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1]),  # cup
+        dagap_tf.list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1]),  # bowl
+        dagap_tf.list_to_pose([0.15, -0.4, -0.05], [0, 0, 0, 1]),  # spoon
+        dagap_tf.list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
     ]
 
     # transform_sink_map = lookup_transform(frame, u'map')
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
     for element in object_spawning_poses_sink:
-        object_spawning_poses_map.append(transform_pose(element, 'map', 'iai_kitchen/'+reference_frame))
+        object_spawning_poses_map.append(dagap_tf.transform_pose(element, 'map', 'iai_kitchen/'+reference_frame))
 
     query_object_list_map: List[OPMObjectQuery] = [
                                                    OPMObjectQuery(Object="robot", object_location=object_spawning_poses_sink[0]),
@@ -82,6 +82,8 @@ if __name__ == "__main__":
     world = BulletWorld()
     world.set_gravity([0, 0, -9.8])
 
+    tfbroadcaster = TFBroadcaster()
+
     plane = Object("floor", "environment", "plane.urdf", world=world)
     # plane.set_color([0, 0, 0, 1])
 
@@ -94,48 +96,46 @@ if __name__ == "__main__":
     breakfast_cereal = Object(query_object_list_map[1].Object,
                               query_object_list_map[1].Object,
                               path="breakfast_cereal.stl",
-                              pose=Pose(point_to_list(query_object_list_map[1].object_location.position),
-                                        quaternion_to_list(query_object_list_map[1].object_location.orientation),
+                              pose=Pose(dagap_tf.point_to_list(query_object_list_map[1].object_location.position),
+                                        dagap_tf.quaternion_to_list(query_object_list_map[1].object_location.orientation),
                                         frame="iai_kitchen/"+reference_frame))
     breakfast_cereal_desig = ObjectDesignatorDescription(names=[query_object_list_map[1].Object])
     # Spawn cup
     cup = Object(query_object_list_map[2].Object,
                  query_object_list_map[2].Object,
                  path="../resources/cup.stl",
-                 pose=Pose(point_to_list(query_object_list_map[2].object_location.position),
-                           quaternion_to_list(query_object_list_map[2].object_location.orientation),
+                 pose=Pose(dagap_tf.point_to_list(query_object_list_map[2].object_location.position),
+                           dagap_tf.quaternion_to_list(query_object_list_map[2].object_location.orientation),
                            frame="iai_kitchen/"+reference_frame))
     cup_desig = ObjectDesignatorDescription(names=[query_object_list_map[2].Object])
     # Spawn bowl
     bowl = Object(query_object_list_map[3].Object,
                   query_object_list_map[3].Object,
                   path="bowl.stl",
-                  pose=Pose(point_to_list(query_object_list_map[3].object_location.position),
-                            quaternion_to_list(query_object_list_map[3].object_location.orientation),
+                  pose=Pose(dagap_tf.point_to_list(query_object_list_map[3].object_location.position),
+                            dagap_tf.quaternion_to_list(query_object_list_map[3].object_location.orientation),
                             frame="iai_kitchen/"+reference_frame))
     bowl_desig = ObjectDesignatorDescription(names=[query_object_list_map[3].Object])
     # Spawn spoon
     spoon = Object(query_object_list_map[4].Object,
                    query_object_list_map[4].Object,
                    path="spoon.stl",
-                   pose=Pose(point_to_list(query_object_list_map[4].object_location.position),
-                             quaternion_to_list(query_object_list_map[4].object_location.orientation),
+                   pose=Pose(dagap_tf.point_to_list(query_object_list_map[4].object_location.position),
+                             dagap_tf.quaternion_to_list(query_object_list_map[4].object_location.orientation),
                              frame="iai_kitchen/"+reference_frame))
     spoon_desig = ObjectDesignatorDescription(names=[query_object_list_map[4].Object])
     # Spawn milk
     milk = Object(query_object_list_map[5].Object,
                   query_object_list_map[5].Object,
                   path="milk.stl",
-                  pose=Pose(point_to_list(query_object_list_map[5].object_location.position),
-                            quaternion_to_list(query_object_list_map[5].object_location.orientation),
+                  pose=Pose(dagap_tf.point_to_list(query_object_list_map[5].object_location.position),
+                            dagap_tf.quaternion_to_list(query_object_list_map[5].object_location.orientation),
                             frame="iai_kitchen/"+reference_frame))
     milk_desig = ObjectDesignatorDescription(names=[query_object_list_map[5].Object])
 
     # Spawn PR2 robot
     pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
     robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
-
-    tfbroadcaster = TFBroadcaster()
 
     query_object_list_map[1].object_frame = "simulated/" + breakfast_cereal.get_link_tf_frame(link_name="").replace("/", "")
     query_object_list_map[2].object_frame = "simulated/" + cup.get_link_tf_frame(link_name="").replace("/", "")
@@ -168,6 +168,12 @@ if __name__ == "__main__":
     # trans_stamped: geometry_msgs.msg.TransformStamped = lookup_transform(target_frame="bowl",
     #                                                                      source_frame="iai_kitchen/sink_area_surface")
     # rospy.loginfo("Got transform between bowl and iai_kitchen/sink_area_surface: ", trans_stamped.transform)
+
+    if dagap_tf.lookup_transform("simulated/"+kitchen.get_link_tf_frame("sink_area_surface"), "simulated/"+bowl.tf_frame):
+        rospy.loginfo("Found transform")
+    else:
+        rospy.logwarn("Did not find transform")
+
 
     with simulated_robot:
         # Send request to DAGAP service
