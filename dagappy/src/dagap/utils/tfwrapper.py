@@ -1,6 +1,6 @@
 import rospy
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, Vector3, Transform, TransformStamped
-from tf2_ros import Buffer, TransformListener
+from tf2_ros import Buffer, TransformListener, ExtrapolationException
 from tf2_geometry_msgs import do_transform_pose
 
 tf_buffer: Buffer = None
@@ -66,10 +66,13 @@ def transform_to_list(transform: Transform):
 
 def lookup_transform(target_frame, source_frame, time=0, timeout=5.0) -> TransformStamped:
     local_tf_buffer = get_tf_buffer()
-    return local_tf_buffer.lookup_transform(target_frame=target_frame,
-                                            source_frame=source_frame,
-                                            time=rospy.Time(time),
-                                            timeout=rospy.Duration(timeout))
+    try:
+        return local_tf_buffer.lookup_transform(target_frame=target_frame,
+                                                source_frame=source_frame,
+                                                time=rospy.Time(time),
+                                                timeout=rospy.Duration(timeout))
+    except ExtrapolationException:
+        return TransformStamped()
 
 
 def transform_pose(pose, target_frame, source_frame) -> PoseStamped:
