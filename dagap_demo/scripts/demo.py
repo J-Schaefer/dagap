@@ -2,31 +2,29 @@
 
 from __future__ import print_function
 
-import sys
-from typing import List, Type
+from typing import List, Tuple
 
+# ROS Imports
 import rospy
+from geometry_msgs.msg import Pose
 
+# DAGAP Imports
 from dagap_msgs.srv import *
 from dagap_msgs.msg import *
-from geometry_msgs.msg import Pose, Point, Quaternion
 import dagap.utils.tfwrapper as dagap_tf
-import pycram
+
+# PyCRAM Imports
 from pycram.bullet_world import BulletWorld, Object
-import pycram.bullet_world_reasoning as btr
-import tf
-from pycram.designators.motion_designator import MotionDesignatorDescription, MoveArmJointsMotion
 from pycram.process_module import simulated_robot, with_simulated_robot
-from pycram.language import macros, par
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
 from pycram.designators.object_designator import *
 from pycram.ros.tf_broadcaster import TFBroadcaster
-from pycram import designator
+from pycram.designator import ObjectDesignatorDescription
 
 
-def opm_dagap_client(reference_frame, object_list):
+def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
     rospy.wait_for_service('dagap_opm_query')
     try:
         call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
@@ -63,6 +61,15 @@ class PickAndPlaceDemo:
         for element in self.object_spawning_poses_sink:
             self.object_spawning_poses_map.append(dagap_tf.transform_pose(element, 'map', 'iai_kitchen/' + self.reference_frame))
 
+        self.object_names = [
+            "robot",
+            "breakfast-cereal",
+            "cup",
+            "bowl",
+            "spoon",
+            "milk"
+        ]
+
         self.query_object_list_map: List[OPMObjectQuery] = [
             OPMObjectQuery(Object="robot", object_location=self.object_spawning_poses_sink[0]),
             OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_map[1].pose),
@@ -87,6 +94,7 @@ class PickAndPlaceDemo:
 
         self.tfbroadcaster = TFBroadcaster()
 
+        # Spawn ground plane
         self.plane = Object("floor", "environment", "plane.urdf", world=self.world)
         # plane.set_color([0, 0, 0, 1])
 
@@ -141,8 +149,7 @@ class PickAndPlaceDemo:
         self.pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
-        self.query_object_list_map[1].object_frame = "simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace(
-            "/", "")
+        self.query_object_list_map[1].object_frame = "simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", "")
         self.query_object_list_map[2].object_frame = "simulated/" + self.cup.get_link_tf_frame(link_name="").replace("/", "")
         self.query_object_list_map[3].object_frame = "simulated/" + self.bowl.get_link_tf_frame(link_name="").replace("/", "")
         self.query_object_list_map[4].object_frame = "simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", "")
@@ -174,17 +181,47 @@ class PickAndPlaceDemo:
         #                                                                      source_frame="iai_kitchen/sink_area_surface")
         # rospy.loginfo("Got transform between bowl and iai_kitchen/sink_area_surface: ", trans_stamped.transform)
 
+        # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
                                      "simulated/" + self.bowl.tf_frame):
             rospy.loginfo("Found transform")
         else:
             rospy.logwarn("Did not find transform")
 
-    def get_designator_from_name(self, object_name: str):
-        pass
+    def get_designator_from_name(self, object_name: str) -> ObjectDesignatorDescription:
+        if self.object_names[0] == object_name:
+            return self.robot_desig
+        if self.object_names[1] == object_name:
+            return self.breakfast_cereal_desig
+        if self.object_names[2] == object_name:
+            return self.cup_desig
+        if self.object_names[3] == object_name:
+            return self.bowl_desig
+        if self.object_names[4] == object_name:
+            return self.spoon_desig
+        if self.object_names[5] == object_name:
+            return self.milk_desig
 
-    def get_name_from_frame(self, frame: str):
-        pass
+    def get_object_from_name(self, object_name: str) -> Object:
+        if self.object_names[0] == object_name:
+            return self.pr2
+        if self.object_names[1] == object_name:
+            return self.breakfast_cereal
+        if self.object_names[2] == object_name:
+            return self.cup
+        if self.object_names[3] == object_name:
+            return self.bowl
+        if self.object_names[4] == object_name:
+            return self.spoon
+        if self.object_names[5] == object_name:
+            return self.milk
+
+    def get_name_from_frame(self, frame: str) -> str:
+        for name in self.object_names:
+            if name in frame:
+                return name
+        rospy.logwarn("[get_name_from_frame]: Could not find name.")
+        return ""
 
     def run(self):
         rospy.loginfo("Running demo.")
@@ -192,14 +229,25 @@ class PickAndPlaceDemo:
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
                             param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
-            res = opm_dagap_client(reference_frame=self.reference_frame,
-                                   object_list=self.query_object_list_map)
+            # service return frame not the name
+            res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
+                                                             object_list=self.query_object_list_map)
             rospy.loginfo("Received answer:")
             print(res)
 
             ParkArmsAction([Arms.BOTH]).resolve().perform()
             MoveTorsoAction([0.3]).resolve().perform()
 
+            next_object_name = self.get_name_from_frame(res.next_object)
+            next_object_desig: ObjectDesignatorDescription = self.get_designator_from_name(next_object_name)
+
+            pickup_pose = CostmapLocation(target=next_object_desig.resolve(), reachable_for=self.robot_desig).resolve()
+            pickup_arm = pickup_pose.reachable_arms[0]
+
+            NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
+
+            PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
+                         grasps=["front"]).resolve().perform()
 
 if __name__ == "__main__":
     print("Starting demo")
