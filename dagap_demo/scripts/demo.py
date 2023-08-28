@@ -44,9 +44,9 @@ class PickAndPlaceDemo:
         self.object_spawning_poses_sink: List[Pose] = [
             dagap_tf.list_to_pose([0, 0, 0], [0, 0, 0, 1]),  # robot, position empty
             dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
-            dagap_tf.list_to_pose([0.2, -0.35, 0.1], [0, 0, 0, 1]),  # cup
-            dagap_tf.list_to_pose([0.18, -0.55, 0.1], [0, 0, 0, 1]),  # bowl
-            dagap_tf.list_to_pose([0.15, -0.4, -0.05], [0, 0, 0, 1]),  # spoon
+            dagap_tf.list_to_pose([0.2, -0.35, 0.05], [0, 0, 0, 1]),  # cup
+            dagap_tf.list_to_pose([0.20, -0.75, 0.05], [0, 0, 0, 1]),  # bowl
+            dagap_tf.list_to_pose([0.15, -0.4, 0.1], [0, 0, 0, 1]),  # spoon
             dagap_tf.list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
         ]
 
@@ -236,7 +236,7 @@ class PickAndPlaceDemo:
             print(res)
 
             ParkArmsAction([Arms.BOTH]).resolve().perform()
-            MoveTorsoAction([0.3]).resolve().perform()
+            MoveTorsoAction([0.33]).resolve().perform()
 
             next_object_name = self.get_name_from_frame(res.next_object)
             next_object_desig: ObjectDesignatorDescription = self.get_designator_from_name(next_object_name)
