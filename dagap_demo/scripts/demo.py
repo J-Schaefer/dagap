@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 # ROS Imports
 import rospy
-from geometry_msgs.msg import Pose
+# from geometry_msgs.msg import Pose
 
 # DAGAP Imports
 from dagap_msgs.srv import *
@@ -41,6 +41,21 @@ class PickAndPlaceDemo:
         self.reference_frame = "sink_area_surface"
         dagap_tf.init()  # call tfwrapper init()
 
+        # Set up the bullet world
+        self.world = BulletWorld()
+        self.world.set_gravity([0, 0, -9.8])
+
+        self.tfbroadcaster = TFBroadcaster()
+
+        # Spawn ground plane
+        self.plane = Object("floor", "environment", "plane.urdf", world=self.world)
+        # plane.set_color([0, 0, 0, 1])
+
+        # Spawn kitchen
+        self.kitchen = Object("kitchen", "environment", "kitchen.urdf")
+        # kitchen.set_color([0.2, 0, 0.4, 0.6])
+        self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
+
         self.object_spawning_poses_sink: List[Pose] = [
             dagap_tf.list_to_pose([0, 0, 0], [0, 0, 0, 1]),  # robot, position empty
             dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
@@ -58,8 +73,10 @@ class PickAndPlaceDemo:
         self.object_spawning_poses_map: List[geometry_msgs.msg.PoseStamped] = []
 
         # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
+        kitchen_frame = self.kitchen.get_link_tf_frame("")
         for element in self.object_spawning_poses_sink:
-            self.object_spawning_poses_map.append(dagap_tf.transform_pose(element, 'map', 'iai_kitchen/' + self.reference_frame))
+            self.object_spawning_poses_map.append(
+                dagap_tf.transform_pose(element, 'simulated/map', "simulated/" + kitchen_frame + self.reference_frame))
 
         self.object_names = [
             "robot",
@@ -88,28 +105,11 @@ class PickAndPlaceDemo:
             OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_sink[5])
         ]
 
-        # Set up the bullet world
-        self.world = BulletWorld()
-        self.world.set_gravity([0, 0, -9.8])
-
-        self.tfbroadcaster = TFBroadcaster()
-
-        # Spawn ground plane
-        self.plane = Object("floor", "environment", "plane.urdf", world=self.world)
-        # plane.set_color([0, 0, 0, 1])
-
-        # Spawn kitchen
-        self.kitchen = Object("kitchen", "environment", "kitchen.urdf")
-        # kitchen.set_color([0.2, 0, 0.4, 0.6])
-        self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
-
         # Spawn breakfast cereal
         self.breakfast_cereal = Object(self.query_object_list_map[1].Object,
                                   self.query_object_list_map[1].Object,
                                   path="breakfast_cereal.stl",
                                   pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[1].object_location.position),
-                                            dagap_tf.quaternion_to_list(
-                                                self.query_object_list_map[1].object_location.orientation),
                                             frame="iai_kitchen/" + self.reference_frame))
         self.breakfast_cereal_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[1].Object])
         # Spawn cup
@@ -117,7 +117,6 @@ class PickAndPlaceDemo:
                      self.query_object_list_map[2].Object,
                      path="../resources/cup.stl",
                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[2].object_location.position),
-                               dagap_tf.quaternion_to_list(self.query_object_list_map[2].object_location.orientation),
                                frame="iai_kitchen/" + self.reference_frame))
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
@@ -125,7 +124,6 @@ class PickAndPlaceDemo:
                       self.query_object_list_map[3].Object,
                       path="bowl.stl",
                       pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[3].object_location.position),
-                                dagap_tf.quaternion_to_list(self.query_object_list_map[3].object_location.orientation),
                                 frame="iai_kitchen/" + self.reference_frame))
         self.bowl_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[3].Object])
         # Spawn spoon
@@ -133,7 +131,6 @@ class PickAndPlaceDemo:
                        self.query_object_list_map[4].Object,
                        path="spoon.stl",
                        pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[4].object_location.position),
-                                 dagap_tf.quaternion_to_list(self.query_object_list_map[4].object_location.orientation),
                                  frame="iai_kitchen/" + self.reference_frame))
         self.spoon_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[4].Object])
         # Spawn milk
@@ -141,7 +138,6 @@ class PickAndPlaceDemo:
                       self.query_object_list_map[5].Object,
                       path="milk.stl",
                       pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[5].object_location.position),
-                                dagap_tf.quaternion_to_list(self.query_object_list_map[5].object_location.orientation),
                                 frame="iai_kitchen/" + self.reference_frame))
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
