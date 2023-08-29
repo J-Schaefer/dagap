@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from typing import List, Tuple
+from typing import List
 
 # ROS Imports
 import rospy
@@ -22,6 +22,7 @@ from pycram.enums import Arms
 from pycram.designators.object_designator import *
 from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
+from pycram.pose import Pose
 
 
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
@@ -150,32 +151,6 @@ class PickAndPlaceDemo:
         self.query_object_list_map[3].object_frame = "simulated/" + self.bowl.get_link_tf_frame(link_name="").replace("/", "")
         self.query_object_list_map[4].object_frame = "simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", "")
         self.query_object_list_map[5].object_frame = "simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", "")
-
-        # # Broadcast all object frames
-        # pub = rospy.Publisher(name=u"kitchen_item_frames", data_class=dagap_msgs.msg.KitchenObjectLocation, queue_size=10)
-        # element: OPMObjectQuery
-        # for element in query_object_list_sink:
-        #     rospy.loginfo("Demo: Checking pose for object: {}".format(element.Object))
-        #     if not element.Object=="robot":
-        #         rospy.loginfo("Demo: Publishing broadcast of tf for object: {}".format(element.Object))
-        #
-        #         message: dagap_msgs.msg.KitchenObjectLocation
-        #
-        #         # Set pose in current reference frame (iai_kitchen/sink_area_surface)
-        #         current_element_posestamped = geometry_msgs.msg.PoseStamped()
-        #         current_element_posestamped.header.frame_id = "iai_kitchen/" + reference_frame
-        #         current_element_posestamped.header.stamp = rospy.Time.now()
-        #         current_element_posestamped.pose = element.object_location
-        #
-        #         message = dagap_msgs.msg.KitchenObjectLocation()
-        #         message.Object = element.Object
-        #         message.object_location = current_element_posestamped
-        #         pub.publish(message)
-        #
-        # # Test one pose
-        # trans_stamped: geometry_msgs.msg.TransformStamped = lookup_transform(target_frame="bowl",
-        #                                                                      source_frame="iai_kitchen/sink_area_surface")
-        # rospy.loginfo("Got transform between bowl and iai_kitchen/sink_area_surface: ", trans_stamped.transform)
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
