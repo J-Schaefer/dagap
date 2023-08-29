@@ -228,7 +228,7 @@ class PickAndPlaceDemo:
 
                 pickup_pose = CostmapLocation(target=next_object_desig.resolve(),
                                               reachable_for=self.robot_desig).resolve()
-                pickup_arm = pickup_pose.reachable_arms[0]
+                pickup_arm = pickup_pose.reachable_arms[0]  # allocate an arm to the grasping task
 
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
 
