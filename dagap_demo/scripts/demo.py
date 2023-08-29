@@ -146,11 +146,16 @@ class PickAndPlaceDemo:
         self.pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
-        self.query_object_list_map[1].object_frame = "simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", "")
-        self.query_object_list_map[2].object_frame = "simulated/" + self.cup.get_link_tf_frame(link_name="").replace("/", "")
-        self.query_object_list_map[3].object_frame = "simulated/" + self.bowl.get_link_tf_frame(link_name="").replace("/", "")
-        self.query_object_list_map[4].object_frame = "simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", "")
-        self.query_object_list_map[5].object_frame = "simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", "")
+        self.query_object_list_map[1].object_frame = ("simulated/"
+                                                      + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[2].object_frame = ("simulated/"
+                                                      + self.cup.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[3].object_frame = ("simulated/"
+                                                      + self.bowl.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[4].object_frame = ("simulated/"
+                                                      + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[5].object_frame = ("simulated/"
+                                                      + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
@@ -200,25 +205,52 @@ class PickAndPlaceDemo:
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
                             param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
-            # service return frame not the name
-            res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
-                                                             object_list=self.query_object_list_map)
-            rospy.loginfo("Received answer:")
-            print(res)
 
-            ParkArmsAction([Arms.BOTH]).resolve().perform()
-            MoveTorsoAction([0.33]).resolve().perform()
+            object_list = self.query_object_list_map
 
-            next_object_name = self.get_name_from_frame(res.next_object)
-            next_object_desig: ObjectDesignatorDescription = self.get_designator_from_name(next_object_name)
+            while len(object_list) > 1:
+                # service return frame not the name
+                res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
+                                                                 object_list=object_list)
+                rospy.loginfo("Received answer:")
+                print(res)
 
-            pickup_pose = CostmapLocation(target=next_object_desig.resolve(), reachable_for=self.robot_desig).resolve()
-            pickup_arm = pickup_pose.reachable_arms[0]
+                ParkArmsAction([Arms.BOTH]).resolve().perform()
+                MoveTorsoAction([0.33]).resolve().perform()
 
-            NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
+                next_object_name = self.get_name_from_frame(res.next_object)
+                next_object_desig: ObjectDesignatorDescription = self.get_designator_from_name(next_object_name)
 
-            PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
-                         grasps=["front"]).resolve().perform()
+                # Remove current object from list for next iteration
+                for element in list(object_list):
+                    if element.Object == next_object_name:
+                        object_list.remove(element)
+
+                pickup_pose = CostmapLocation(target=next_object_desig.resolve(),
+                                              reachable_for=self.robot_desig).resolve()
+                pickup_arm = pickup_pose.reachable_arms[0]
+
+                NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
+
+                # TODO: change arm according to DAGAP output
+                # TODO: drive to kitchen first and ask DAGAP again for the arm
+                PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
+                             grasps=["front"]).resolve().perform()
+                ParkArmsAction([Arms.BOTH]).resolve().perform()
+                place_island = SemanticCostmapLocation("kitchen_island_surface", self.kitchen_desig.resolve(),
+                                                       next_object_desig.resolve()).resolve()
+
+                place_stand = CostmapLocation(place_island.pose, reachable_for=self.robot_desig,
+                                              reachable_arm=pickup_arm).resolve()
+
+                NavigateAction(target_locations=[place_stand.pose]).resolve().perform()
+
+                PlaceAction(next_object_desig,
+                            target_locations=[place_island.pose],
+                            arms=[pickup_arm]).resolve().perform()
+                ParkArmsAction([Arms.BOTH]).resolve().perform()
+
+
 
 if __name__ == "__main__":
     print("Starting demo")
