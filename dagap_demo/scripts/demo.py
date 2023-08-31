@@ -6,6 +6,8 @@ from typing import List
 
 # ROS Imports
 import rospy
+import std_msgs.msg
+
 # from geometry_msgs.msg import Pose
 
 # DAGAP Imports
@@ -23,7 +25,7 @@ from pycram.designators.object_designator import *
 from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
 from pycram.pose import Pose
-
+from pycram.plan_failures import IKError
 
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
     rospy.wait_for_service('dagap_opm_query')
@@ -31,6 +33,17 @@ def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> Get
         call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
         srv = GetNextOPMObjectRequest(reference_frame, object_list)
         response = call_common_service(srv)
+        return response
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+
+
+def dagap_client(task_description: str, object_frame: [str]) -> GetGraspPoseResponse:
+    rospy.wait_for_service('dagap_query')
+    try:
+        call_dagap_service = rospy.ServiceProxy('dagap_query', GetGraspPose)
+        srv = GetGraspPoseRequest(task_description, object_frame)
+        response = call_dagap_service(srv)
         return response
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
@@ -228,14 +241,36 @@ class PickAndPlaceDemo:
 
                 pickup_pose = CostmapLocation(target=next_object_desig.resolve(),
                                               reachable_for=self.robot_desig).resolve()
-                pickup_arm = pickup_pose.reachable_arms[0]  # allocate an arm to the grasping task
+                # pickup_arm = pickup_pose.reachable_arms[0]  # allocate an arm to the grasping task
 
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
 
                 # TODO: change arm according to DAGAP output
                 # TODO: drive to kitchen first and ask DAGAP again for the arm
-                PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
-                             grasps=["front"]).resolve().perform()
+                description = "Pick up"
+                gripper: GetGraspPoseResponse = dagap_client(task_description=description,
+                                                             object_frame=[res.next_object])
+
+                if "l_gripper" in gripper.grasp_pose[0].header.frame_id:
+                    pickup_arm = "left"
+                    rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
+                elif "r_gripper" in gripper.grasp_pose[0].header.frame_id:
+                    pickup_arm = "right"
+                    rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
+                else:
+                    rospy.logwarn("Could not allocate a gripper.")
+
+                try:
+                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
+                                 grasps=["front"]).resolve().perform()
+                except IKError:
+                    if pickup_arm == "left":
+                        pickup_arm = "right"
+                    elif pickup_arm == "right":
+                        pickup_arm = "left"
+                    PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
+                                 grasps=["front"]).resolve().perform()
+
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
                 place_island = SemanticCostmapLocation("kitchen_island_surface", self.kitchen_desig.resolve(),
                                                        next_object_desig.resolve()).resolve()

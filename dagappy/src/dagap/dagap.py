@@ -39,13 +39,13 @@ class DAGAP:
         rospy.loginfo("Request description: " + str(req.description))
         rospy.loginfo(req.object_frames)
 
-        action = self.nl_module.define_action(req.description.data)
+        action = self.nl_module.define_action(req.description)
         if isinstance(action, int):
             rospy.logerr("Error in NL module. Exiting.")
         else:  # no error in NL processing
             object_frames = []
             for element in req.object_frames:
-                object_frames.append(element.data)
+                object_frames.append(element)
 
             poses = self.grasp_planner.decide(object=object_frames, action=action, robot=self.robot, opm_action=False)
             res = dagap_msgs.srv.GetGraspPoseResponse(poses)

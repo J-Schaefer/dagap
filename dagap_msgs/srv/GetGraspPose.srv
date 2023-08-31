@@ -1,5 +1,5 @@
-std_msgs/String description
-std_msgs/String[] object_frames
+string description
+string[] object_frames
 
 ---
 

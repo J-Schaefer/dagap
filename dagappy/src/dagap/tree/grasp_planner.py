@@ -92,7 +92,8 @@ class GraspPlanner(Behaviour):
                 # print(self.manipulation_cases.get(sentence, "Not found"))
                 GraspPose = TransformStamped()
                 GraspPose.header.frame_id = winner
-                GraspPose.transform = dagap_tf.list_to_transform(pose_winner[0], pose_winner[1])
+                GraspPose.transform.translation = pose_winner[0]
+                GraspPose.transform.rotation = pose_winner[1]
 
                 return [GraspPose]
 
