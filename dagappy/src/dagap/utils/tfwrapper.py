@@ -75,7 +75,7 @@ def lookup_transform(target_frame, source_frame, time=0, timeout=5.0) -> Transfo
         return TransformStamped()
 
 
-def transform_pose(pose, target_frame, source_frame) -> PoseStamped:
+def transform_pose(pose: Pose, target_frame: str, source_frame: str) -> PoseStamped:
     pose_stamped = PoseStamped()
     pose_stamped.pose = pose
     pose_stamped.header.frame_id = source_frame

@@ -27,6 +27,7 @@ from pycram.designator import ObjectDesignatorDescription
 from pycram.pose import Pose
 from pycram.plan_failures import IKError
 
+
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
     rospy.wait_for_service('dagap_opm_query')
     try:
@@ -52,7 +53,7 @@ def dagap_client(task_description: str, object_frame: [str]) -> GetGraspPoseResp
 class PickAndPlaceDemo:
 
     def __init__(self):
-        self.reference_frame = "sink_area_surface"
+        self.reference_frame = "iai_kitchen/sink_area_surface"
         dagap_tf.init()  # call tfwrapper init()
 
         # Set up the bullet world
@@ -70,8 +71,19 @@ class PickAndPlaceDemo:
         # kitchen.set_color([0.2, 0, 0.4, 0.6])
         self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
+        sink_area_surface_frame = "simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface")
+        kitchen_island_surface_frame = "simulated/" + self.kitchen.get_link_tf_frame("kitchen_island_surface")
+
+        self.object_spawning_poses: List[Pose] = [
+            Pose([0.2, -0.15, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # breakfast-cereal
+            Pose([0.2, -0.35, 0.05], [0, 0, 0, 1], frame=sink_area_surface_frame),  # cup
+            Pose([0.30, 0.5, 0.05], [0, 0, 0, 1], frame=sink_area_surface_frame),  # bowl
+            Pose([0.15, -0.4, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # spoon
+            Pose([0.07, -0.35, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame)  # milk
+        ]
+
+        # Original poses
         self.object_spawning_poses_sink: List[Pose] = [
-            dagap_tf.list_to_pose([0, 0, 0], [0, 0, 0, 1]),  # robot, position empty
             dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
             dagap_tf.list_to_pose([0.2, -0.35, 0.05], [0, 0, 0, 1]),  # cup
             dagap_tf.list_to_pose([0.20, -0.75, 0.05], [0, 0, 0, 1]),  # bowl
@@ -81,16 +93,16 @@ class PickAndPlaceDemo:
 
         # transform_sink_map = lookup_transform(frame, u'map')
 
-        # Hint for type of element
-        element: geometry_msgs.msg.Pose
+
         # Hint for type of list object_spawning_poses_map
         self.object_spawning_poses_map: List[geometry_msgs.msg.PoseStamped] = []
 
         # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
-        kitchen_frame = self.kitchen.get_link_tf_frame("")
-        for element in self.object_spawning_poses_sink:
+        # Hint for type of element
+        element: Pose
+        for element in self.object_spawning_poses:
             self.object_spawning_poses_map.append(
-                dagap_tf.transform_pose(element, 'simulated/map', "simulated/" + kitchen_frame + self.reference_frame))
+                dagap_tf.transform_pose(element, 'simulated/map', element.header.frame_id))
 
         self.object_names = [
             "robot",
@@ -102,57 +114,43 @@ class PickAndPlaceDemo:
         ]
 
         self.query_object_list_map: List[OPMObjectQuery] = [
-            OPMObjectQuery(Object="robot", object_location=self.object_spawning_poses_sink[0]),
-            OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_map[1].pose),
-            OPMObjectQuery(Object="cup", object_location=self.object_spawning_poses_map[2].pose),
-            OPMObjectQuery(Object="bowl", object_location=self.object_spawning_poses_map[3].pose),
-            OPMObjectQuery(Object="spoon", object_location=self.object_spawning_poses_map[4].pose),
-            OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_map[5].pose)
-        ]
-
-        self.query_object_list_sink: List[OPMObjectQuery] = [
-            OPMObjectQuery(Object="robot", object_location=self.object_spawning_poses_sink[0]),
-            OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_sink[1]),
-            OPMObjectQuery(Object="cup", object_location=self.object_spawning_poses_sink[2]),
-            OPMObjectQuery(Object="bowl", object_location=self.object_spawning_poses_sink[3]),
-            OPMObjectQuery(Object="spoon", object_location=self.object_spawning_poses_sink[4]),
-            OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_sink[5])
+            OPMObjectQuery(Object="robot", object_location=Pose([0, 0, 0])),  # OPM needs robot in first element
+            OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_map[0].pose),
+            OPMObjectQuery(Object="cup", object_location=self.object_spawning_poses_map[1].pose),
+            OPMObjectQuery(Object="bowl", object_location=self.object_spawning_poses_map[2].pose),
+            OPMObjectQuery(Object="spoon", object_location=self.object_spawning_poses_map[3].pose),
+            OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_map[4].pose)
         ]
 
         # Spawn breakfast cereal
         self.breakfast_cereal = Object(self.query_object_list_map[1].Object,
                                   self.query_object_list_map[1].Object,
                                   path="breakfast_cereal.stl",
-                                  pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[1].object_location.position),
-                                            frame="iai_kitchen/" + self.reference_frame))
+                                  pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[1].object_location.position)))
         self.breakfast_cereal_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[1].Object])
         # Spawn cup
         self.cup = Object(self.query_object_list_map[2].Object,
                      self.query_object_list_map[2].Object,
                      path="../resources/cup.stl",
-                     pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[2].object_location.position),
-                               frame="iai_kitchen/" + self.reference_frame))
+                     pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[2].object_location.position)))
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
         self.bowl = Object(self.query_object_list_map[3].Object,
                       self.query_object_list_map[3].Object,
                       path="bowl.stl",
-                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[3].object_location.position),
-                                frame="iai_kitchen/" + self.reference_frame))
+                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[3].object_location.position)))
         self.bowl_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[3].Object])
         # Spawn spoon
         self.spoon = Object(self.query_object_list_map[4].Object,
                        self.query_object_list_map[4].Object,
                        path="spoon.stl",
-                       pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[4].object_location.position),
-                                 frame="iai_kitchen/" + self.reference_frame))
+                       pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[4].object_location.position)))
         self.spoon_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[4].Object])
         # Spawn milk
         self.milk = Object(self.query_object_list_map[5].Object,
                       self.query_object_list_map[5].Object,
                       path="milk.stl",
-                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[5].object_location.position),
-                                frame="iai_kitchen/" + self.reference_frame))
+                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[5].object_location.position)))
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
         # Spawn PR2 robot
@@ -264,10 +262,13 @@ class PickAndPlaceDemo:
                      PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
                                  grasps=["front"]).resolve().perform()
                 except IKError:
+                    rospy.logwarn("Failed execution with {} hand.".format(pickup_arm))
                     if pickup_arm == "left":
                         pickup_arm = "right"
+                        rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
                     elif pickup_arm == "right":
                         pickup_arm = "left"
+                        rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
                                  grasps=["front"]).resolve().perform()
 
