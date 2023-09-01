@@ -26,6 +26,7 @@ from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
 from pycram.pose import Pose
 from pycram.plan_failures import IKError
+from pycram.local_transformer import LocalTransformer
 
 
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
@@ -61,6 +62,7 @@ class PickAndPlaceDemo:
         self.world.set_gravity([0, 0, -9.8])
 
         self.tfbroadcaster = TFBroadcaster()
+        self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
         # Spawn ground plane
         self.plane = Object("floor", "environment", "plane.urdf", world=self.world)
@@ -71,38 +73,39 @@ class PickAndPlaceDemo:
         # kitchen.set_color([0.2, 0, 0.4, 0.6])
         self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
-        sink_area_surface_frame = "simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface")
-        kitchen_island_surface_frame = "simulated/" + self.kitchen.get_link_tf_frame("kitchen_island_surface")
+        sink_area_surface_frame = self.kitchen.get_link_tf_frame("sink_area_surface")
+        kitchen_island_surface_frame = self.kitchen.get_link_tf_frame("kitchen_island_surface")
 
         self.object_spawning_poses: List[Pose] = [
             Pose([0.2, -0.15, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # breakfast-cereal
             Pose([0.2, -0.35, 0.05], [0, 0, 0, 1], frame=sink_area_surface_frame),  # cup
-            Pose([0.30, 0.5, 0.05], [0, 0, 0, 1], frame=sink_area_surface_frame),  # bowl
+            Pose([0.0, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
             Pose([0.15, -0.4, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # spoon
             Pose([0.07, -0.35, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame)  # milk
         ]
 
         # Original poses
-        self.object_spawning_poses_sink: List[Pose] = [
-            dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
-            dagap_tf.list_to_pose([0.2, -0.35, 0.05], [0, 0, 0, 1]),  # cup
-            dagap_tf.list_to_pose([0.20, -0.75, 0.05], [0, 0, 0, 1]),  # bowl
-            dagap_tf.list_to_pose([0.15, -0.4, 0.1], [0, 0, 0, 1]),  # spoon
-            dagap_tf.list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
-        ]
+        # self.object_spawning_poses_sink: List[Pose] = [
+        #     dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
+        #     dagap_tf.list_to_pose([0.2, -0.35, 0.05], [0, 0, 0, 1]),  # cup
+        #     dagap_tf.list_to_pose([0.20, -0.75, 0.05], [0, 0, 0, 1]),  # bowl
+        #     dagap_tf.list_to_pose([0.15, -0.4, 0.1], [0, 0, 0, 1]),  # spoon
+        #     dagap_tf.list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
+        # ]
 
         # transform_sink_map = lookup_transform(frame, u'map')
 
 
         # Hint for type of list object_spawning_poses_map
-        self.object_spawning_poses_map: List[geometry_msgs.msg.PoseStamped] = []
+        self.object_spawning_poses_map: List[Pose] = []
 
         # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
         # Hint for type of element
         element: Pose
         for element in self.object_spawning_poses:
             self.object_spawning_poses_map.append(
-                dagap_tf.transform_pose(element, 'simulated/map', element.header.frame_id))
+                # dagap_tf.transform_pose(element, 'simulated/map', element.header.frame_id))
+                self.local_transformer.transform_pose(element, target_frame="map"))
 
         self.object_names = [
             "robot",
@@ -115,48 +118,50 @@ class PickAndPlaceDemo:
 
         self.query_object_list_map: List[OPMObjectQuery] = [
             OPMObjectQuery(Object="robot", object_location=Pose([0, 0, 0])),  # OPM needs robot in first element
-            OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_map[0].pose),
-            OPMObjectQuery(Object="cup", object_location=self.object_spawning_poses_map[1].pose),
-            OPMObjectQuery(Object="bowl", object_location=self.object_spawning_poses_map[2].pose),
-            OPMObjectQuery(Object="spoon", object_location=self.object_spawning_poses_map[3].pose),
-            OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_map[4].pose)
+            OPMObjectQuery(Object="breakfast-cereal", object_location=self.object_spawning_poses_map[0]),
+            OPMObjectQuery(Object="cup", object_location=self.object_spawning_poses_map[1]),
+            OPMObjectQuery(Object="bowl", object_location=self.object_spawning_poses_map[2]),
+            OPMObjectQuery(Object="spoon", object_location=self.object_spawning_poses_map[3]),
+            OPMObjectQuery(Object="milk", object_location=self.object_spawning_poses_map[4])
         ]
 
         # Spawn breakfast cereal
+        # TODO: change self.query_object_list_map to original pose list self.object_spawning_poses_map
         self.breakfast_cereal = Object(self.query_object_list_map[1].Object,
                                   self.query_object_list_map[1].Object,
                                   path="breakfast_cereal.stl",
-                                  pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[1].object_location.position)))
+                                  pose=self.query_object_list_map[1].object_location)
         self.breakfast_cereal_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[1].Object])
         # Spawn cup
         self.cup = Object(self.query_object_list_map[2].Object,
                      self.query_object_list_map[2].Object,
                      path="../resources/cup.stl",
-                     pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[2].object_location.position)))
+                     pose=self.query_object_list_map[2].object_location)
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
         self.bowl = Object(self.query_object_list_map[3].Object,
                       self.query_object_list_map[3].Object,
                       path="bowl.stl",
-                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[3].object_location.position)))
+                      pose=self.query_object_list_map[3].object_location)
         self.bowl_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[3].Object])
         # Spawn spoon
         self.spoon = Object(self.query_object_list_map[4].Object,
                        self.query_object_list_map[4].Object,
                        path="spoon.stl",
-                       pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[4].object_location.position)))
+                       pose=self.query_object_list_map[4].object_location)
         self.spoon_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[4].Object])
         # Spawn milk
         self.milk = Object(self.query_object_list_map[5].Object,
                       self.query_object_list_map[5].Object,
                       path="milk.stl",
-                      pose=Pose(dagap_tf.point_to_list(self.query_object_list_map[5].object_location.position)))
+                      pose=self.query_object_list_map[5].object_location)
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
         # Spawn PR2 robot
         self.pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
+        # TODO: check if that's still correct
         self.query_object_list_map[1].object_frame = ("simulated/"
                                                       + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
         self.query_object_list_map[2].object_frame = ("simulated/"
@@ -167,6 +172,8 @@ class PickAndPlaceDemo:
                                                       + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
         self.query_object_list_map[5].object_frame = ("simulated/"
                                                       + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
+
+        self.world.add_vis_axis(self.bowl.get_pose())  # TODO: add all axes and check other objects
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
