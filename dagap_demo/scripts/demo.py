@@ -71,11 +71,11 @@ class PickAndPlaceDemo:
         kitchen_island_surface_frame = self.kitchen.get_link_tf_frame("kitchen_island_surface")
 
         self.object_spawning_poses: List[Pose] = [
-            Pose([0.2, -0.15, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # breakfast-cereal
-            Pose([0.2, -0.35, 0.05], [0, 0, 0, 1], frame=sink_area_surface_frame),  # cup
+            Pose([0.2, -0.15, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
+            Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
             Pose([0.0, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
-            Pose([0.15, -0.4, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame),  # spoon
-            Pose([0.07, -0.35, 0.1], [0, 0, 0, 1], frame=sink_area_surface_frame)  # milk
+            Pose([0.15, -0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
+            Pose([0.07, -0.35, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
         ]
 
         # Original poses
@@ -155,8 +155,6 @@ class PickAndPlaceDemo:
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         # TODO: check if that's still correct
-
-        self.world.add_vis_axis(self.bowl.get_pose())  # TODO: add all axes and check other objects
         self.query_object_list_map[1].object_frame =\
             ("simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
         self.query_object_list_map[2].object_frame =\
@@ -167,6 +165,12 @@ class PickAndPlaceDemo:
             ("simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
         self.query_object_list_map[5].object_frame =\
             ("simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
+
+        self.world.add_vis_axis(self.bowl.get_pose())
+        self.world.add_vis_axis(self.breakfast_cereal.get_pose())
+        self.world.add_vis_axis(self.cup.get_pose())
+        self.world.add_vis_axis(self.spoon.get_pose())
+        self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
