@@ -78,6 +78,14 @@ class PickAndPlaceDemo:
             Pose([0.07, -0.35, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
         ]
 
+        self.object_placing_poses: List[Pose] = [
+            Pose([-0.2, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
+            Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
+            Pose([-0.24, -0.70, 0.05], [0.0, 0.0, 0.63, 0.77], frame=kitchen_island_surface_frame),  # bowl
+            Pose([-0.24, -0.6, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
+            Pose([0.0, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
+        ]
+
         # Original poses
         # self.object_spawning_poses_sink: List[Pose] = [
         #     dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
@@ -91,14 +99,21 @@ class PickAndPlaceDemo:
 
         # Hint for type of list object_spawning_poses_map
         self.object_spawning_poses_map: List[Pose] = []
+        self.object_placing_poses_map: List[Pose] = []
 
-        # Transform poses from iai_kitchen/sink_area_surface to map for correct spawn pose
-        # Hint for type of element
-        element: Pose
+        # Transform poses to map frame for correct spawn pose
+        element: Pose  # Hint for type of element
         for element in self.object_spawning_poses:
             self.object_spawning_poses_map.append(
                 # dagap_tf.transform_pose(element, 'simulated/map', element.header.frame_id))
                 self.local_transformer.transform_pose(element, target_frame="map"))
+
+        # Transform object_placing_poses into map frame
+        element: Pose  # Hint for type of element
+        for element in self.object_placing_poses:
+            self.object_placing_poses_map.append((
+                self.local_transformer.transform_pose(element, target_frame="map")
+            ))
 
         self.object_names = [
             "robot",
@@ -214,9 +229,21 @@ class PickAndPlaceDemo:
         rospy.logwarn("[get_name_from_frame]: Could not find name.")
         return ""
 
+    def get_placing_pose_from_name(self, object_name: str) -> Pose:
+        if self.object_names[1] == object_name:
+            return self.object_placing_poses_map[0]
+        if self.object_names[2] == object_name:
+            return self.object_placing_poses_map[1]
+        if self.object_names[3] == object_name:
+            return self.object_placing_poses_map[2]
+        if self.object_names[4] == object_name:
+            return self.object_placing_poses_map[3]
+        if self.object_names[5] == object_name:
+            return self.object_placing_poses_map[4]
+
     def run(self):
         rospy.loginfo("Running demo.")
-        with simulated_robot:
+        with (simulated_robot):
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
                             param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
@@ -281,12 +308,28 @@ class PickAndPlaceDemo:
                                  ).resolve().perform()
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
+                # Get placing position on island
                 place_island = SemanticCostmapLocation(urdf_link_name="kitchen_island_surface",
                                                        part_of=self.kitchen_desig.resolve(),
                                                        for_object=next_object_desig.resolve()
                                                        ).resolve()
 
-                place_stand = CostmapLocation(place_island.pose,
+                # self.world.remove_vis_axis()
+
+                # Visualize coordinate system of kitchen island
+                nullpose = dagap_tf.transform_pose(
+                    pose=Pose(),
+                    target_frame="simulated/map",
+                    source_frame="simulated/" + self.kitchen.get_link_tf_frame("kitchen_island_surface")
+                ).pose
+                self.world.add_vis_axis(
+                    Pose(dagap_tf.point_to_list(nullpose.position), dagap_tf.quaternion_to_list(nullpose.orientation)))
+
+                next_placing_pose = self.get_placing_pose_from_name(next_object_name)
+                self.world.add_vis_axis(next_placing_pose)
+
+                # Get position to stand while placing the object
+                place_stand = CostmapLocation(target=next_placing_pose,
                                               reachable_for=self.robot_desig,
                                               reachable_arm=pickup_arm
                                               ).resolve()
@@ -294,11 +337,12 @@ class PickAndPlaceDemo:
                 NavigateAction(target_locations=[place_stand.pose]).resolve().perform()
 
                 PlaceAction(object_designator_description=next_object_desig,
-                            target_locations=[place_island.pose],
+                            target_locations=[next_placing_pose],
                             arms=[pickup_arm]
                             ).resolve().perform()
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
 
+                self.world.remove_vis_axis()  # Remove visualizations
 
 
 if __name__ == "__main__":
