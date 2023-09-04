@@ -87,7 +87,7 @@ class GraspPlanner(Behaviour):
                 rospy.logerr("Could not find transform.")
 
             if opm_action:
-                return [object_frame, winner]  # in case of an error variable winner is is empty
+                return [object_frame, winner]  # TODO: in case of an error variable winner is empty
             else:
                 # print(self.manipulation_cases.get(sentence, "Not found"))
                 GraspPose = TransformStamped()
@@ -96,8 +96,6 @@ class GraspPlanner(Behaviour):
                 GraspPose.transform.rotation = pose_winner[1]
 
                 return [GraspPose]
-
-
 
         elif action == u"one hand support":
             pass

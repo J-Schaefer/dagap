@@ -2,13 +2,8 @@
 
 from __future__ import print_function
 
-from typing import List
-
 # ROS Imports
 import rospy
-import std_msgs.msg
-
-# from geometry_msgs.msg import Pose
 
 # DAGAP Imports
 from dagap_msgs.srv import *
@@ -16,8 +11,7 @@ from dagap_msgs.msg import *
 import dagap.utils.tfwrapper as dagap_tf
 
 # PyCRAM Imports
-from pycram.bullet_world import BulletWorld, Object
-from pycram.process_module import simulated_robot, with_simulated_robot
+from pycram.process_module import simulated_robot
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
@@ -65,11 +59,11 @@ class PickAndPlaceDemo:
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
         # Spawn ground plane
-        self.plane = Object("floor", "environment", "plane.urdf", world=self.world)
+        self.plane = Object(name="floor", type="environment", path="plane.urdf", world=self.world)
         # plane.set_color([0, 0, 0, 1])
 
         # Spawn kitchen
-        self.kitchen = Object("kitchen", "environment", "kitchen.urdf")
+        self.kitchen = Object(name="kitchen", type="environment", path="kitchen.urdf")
         # kitchen.set_color([0.2, 0, 0.4, 0.6])
         self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
@@ -94,7 +88,6 @@ class PickAndPlaceDemo:
         # ]
 
         # transform_sink_map = lookup_transform(frame, u'map')
-
 
         # Hint for type of list object_spawning_poses_map
         self.object_spawning_poses_map: List[Pose] = []
@@ -128,59 +121,59 @@ class PickAndPlaceDemo:
         # Spawn breakfast cereal
         # TODO: change self.query_object_list_map to original pose list self.object_spawning_poses_map
         self.breakfast_cereal = Object(self.query_object_list_map[1].Object,
-                                  self.query_object_list_map[1].Object,
-                                  path="breakfast_cereal.stl",
-                                  pose=self.query_object_list_map[1].object_location)
+                                       self.query_object_list_map[1].Object,
+                                       path="breakfast_cereal.stl",
+                                       pose=self.query_object_list_map[1].object_location)
         self.breakfast_cereal_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[1].Object])
         # Spawn cup
         self.cup = Object(self.query_object_list_map[2].Object,
-                     self.query_object_list_map[2].Object,
-                     path="../resources/cup.stl",
-                     pose=self.query_object_list_map[2].object_location)
+                          self.query_object_list_map[2].Object,
+                          path="../resources/cup.stl",
+                          pose=self.query_object_list_map[2].object_location)
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
         self.bowl = Object(self.query_object_list_map[3].Object,
-                      self.query_object_list_map[3].Object,
-                      path="bowl.stl",
-                      pose=self.query_object_list_map[3].object_location)
+                           self.query_object_list_map[3].Object,
+                           path="bowl.stl",
+                           pose=self.query_object_list_map[3].object_location)
         self.bowl_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[3].Object])
         # Spawn spoon
         self.spoon = Object(self.query_object_list_map[4].Object,
-                       self.query_object_list_map[4].Object,
-                       path="spoon.stl",
-                       pose=self.query_object_list_map[4].object_location)
+                            self.query_object_list_map[4].Object,
+                            path="spoon.stl",
+                            pose=self.query_object_list_map[4].object_location)
         self.spoon_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[4].Object])
         # Spawn milk
         self.milk = Object(self.query_object_list_map[5].Object,
-                      self.query_object_list_map[5].Object,
-                      path="milk.stl",
-                      pose=self.query_object_list_map[5].object_location)
+                           self.query_object_list_map[5].Object,
+                           path="milk.stl",
+                           pose=self.query_object_list_map[5].object_location)
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
         # Spawn PR2 robot
-        self.pr2 = Object("pr2", "robot", "pr2.urdf", Pose([0, 0, 0]))
+        self.pr2 = Object(name="pr2", type="robot", path="pr2.urdf", pose=Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         # TODO: check if that's still correct
-        self.query_object_list_map[1].object_frame = ("simulated/"
-                                                      + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
-        self.query_object_list_map[2].object_frame = ("simulated/"
-                                                      + self.cup.get_link_tf_frame(link_name="").replace("/", ""))
-        self.query_object_list_map[3].object_frame = ("simulated/"
-                                                      + self.bowl.get_link_tf_frame(link_name="").replace("/", ""))
-        self.query_object_list_map[4].object_frame = ("simulated/"
-                                                      + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
-        self.query_object_list_map[5].object_frame = ("simulated/"
-                                                      + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
 
         self.world.add_vis_axis(self.bowl.get_pose())  # TODO: add all axes and check other objects
+        self.query_object_list_map[1].object_frame =\
+            ("simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[2].object_frame =\
+            ("simulated/" + self.cup.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[3].object_frame =\
+            ("simulated/" + self.bowl.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[4].object_frame =\
+            ("simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
+        self.query_object_list_map[5].object_frame =\
+            ("simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
                                      "simulated/" + self.bowl.tf_frame):
-            rospy.loginfo("Found transform")
+            rospy.loginfo("Test succeeded: Found transform")
         else:
-            rospy.logwarn("Did not find transform")
+            rospy.logwarn("Test failed: Did not find transform")
 
     def get_designator_from_name(self, object_name: str) -> ObjectDesignatorDescription:
         if self.object_names[0] == object_name:
@@ -245,7 +238,8 @@ class PickAndPlaceDemo:
                         object_list.remove(element)
 
                 pickup_pose = CostmapLocation(target=next_object_desig.resolve(),
-                                              reachable_for=self.robot_desig).resolve()
+                                              reachable_for=self.robot_desig
+                                              ).resolve()
                 # pickup_arm = pickup_pose.reachable_arms[0]  # allocate an arm to the grasping task
 
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
@@ -266,8 +260,10 @@ class PickAndPlaceDemo:
                     rospy.logwarn("Could not allocate a gripper.")
 
                 try:
-                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
-                                 grasps=["front"]).resolve().perform()
+                    PickUpAction(object_designator_description=next_object_desig,
+                                 arms=[pickup_arm],
+                                 grasps=["front"]
+                                 ).resolve().perform()
                 except IKError:
                     rospy.logwarn("Failed execution with {} hand.".format(pickup_arm))
                     if pickup_arm == "left":
@@ -277,20 +273,26 @@ class PickAndPlaceDemo:
                         pickup_arm = "left"
                         rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
-                                 grasps=["front"]).resolve().perform()
+                                 grasps=["front"]
+                                 ).resolve().perform()
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
-                place_island = SemanticCostmapLocation("kitchen_island_surface", self.kitchen_desig.resolve(),
-                                                       next_object_desig.resolve()).resolve()
+                place_island = SemanticCostmapLocation(urdf_link_name="kitchen_island_surface",
+                                                       part_of=self.kitchen_desig.resolve(),
+                                                       for_object=next_object_desig.resolve()
+                                                       ).resolve()
 
-                place_stand = CostmapLocation(place_island.pose, reachable_for=self.robot_desig,
-                                              reachable_arm=pickup_arm).resolve()
+                place_stand = CostmapLocation(place_island.pose,
+                                              reachable_for=self.robot_desig,
+                                              reachable_arm=pickup_arm
+                                              ).resolve()
 
                 NavigateAction(target_locations=[place_stand.pose]).resolve().perform()
 
-                PlaceAction(next_object_desig,
+                PlaceAction(object_designator_description=next_object_desig,
                             target_locations=[place_island.pose],
-                            arms=[pickup_arm]).resolve().perform()
+                            arms=[pickup_arm]
+                            ).resolve().perform()
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
 
 
