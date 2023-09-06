@@ -169,7 +169,6 @@ class PickAndPlaceDemo:
         self.pr2 = Object(name="pr2", type="robot", path="pr2.urdf", pose=Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
-        # TODO: check if that's still correct
         self.query_object_list_map[1].object_frame =\
             ("simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
         self.query_object_list_map[2].object_frame =\
@@ -241,7 +240,13 @@ class PickAndPlaceDemo:
         if self.object_names[5] == object_name:
             return self.object_placing_poses_map[4]
 
-    def run(self):
+    def run(self, cool_demo: bool = True):
+        """
+
+        Parameters
+        ----------
+        cool_demo: Variable to determine if demo uses OPM/DAGAP service or runs conservatively
+        """
         rospy.loginfo("Running demo.")
         with (simulated_robot):
             # Send request to DAGAP service
@@ -251,11 +256,18 @@ class PickAndPlaceDemo:
             object_list = self.query_object_list_map
 
             while len(object_list) > 1:
-                # service return frame not the name
-                res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
-                                                                 object_list=object_list)
-                rospy.loginfo("Received answer:")
-                print(res)
+
+                if cool_demo:
+                    # service return frame not the name
+                    res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
+                                                                     object_list=object_list)
+                    rospy.loginfo("Received answer:")
+                    print(res)
+                else:
+                    # if conservative demo take next object in list
+                    res = GetNextOPMObjectResponse(next_object=object_list[1].object_frame,
+                                                   hand='left')
+                    pass
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
                 MoveTorsoAction([0.33]).resolve().perform()
@@ -275,22 +287,24 @@ class PickAndPlaceDemo:
 
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
 
-                # TODO: change arm according to DAGAP output
-                # TODO: drive to kitchen first and ask DAGAP again for the arm
-                description = "Pick up"
-                gripper: GetGraspPoseResponse = dagap_client(task_description=description,
-                                                             object_frame=[res.next_object])
+                if cool_demo:
+                    description = "Pick up"
+                    gripper: GetGraspPoseResponse = dagap_client(task_description=description,
+                                                                 object_frame=[res.next_object])
 
-                if "l_gripper" in gripper.grasp_pose[0].header.frame_id:
-                    pickup_arm = "left"
-                    rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
-                elif "r_gripper" in gripper.grasp_pose[0].header.frame_id:
-                    pickup_arm = "right"
-                    rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
-                else:
-                    rospy.logwarn("Could not allocate a gripper.")
+                    if "l_gripper" in gripper.grasp_pose[0].header.frame_id:
+                        pickup_arm = "left"
+                        rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
+                    elif "r_gripper" in gripper.grasp_pose[0].header.frame_id:
+                        pickup_arm = "right"
+                        rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
+                    else:
+                        rospy.logwarn("Could not allocate a gripper.")
+                else:  # if conservative demo
+                    pickup_arm = pickup_pose.reachable_arms[0]
 
                 try:
+                    rospy.loginfo("Picking up {}".format(next_object_name))
                     PickUpAction(object_designator_description=next_object_desig,
                                  arms=[pickup_arm],
                                  grasps=["front"]
@@ -309,10 +323,10 @@ class PickAndPlaceDemo:
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
                 # Get placing position on island
-                place_island = SemanticCostmapLocation(urdf_link_name="kitchen_island_surface",
-                                                       part_of=self.kitchen_desig.resolve(),
-                                                       for_object=next_object_desig.resolve()
-                                                       ).resolve()
+                # place_island = SemanticCostmapLocation(urdf_link_name="kitchen_island_surface",
+                #                                        part_of=self.kitchen_desig.resolve(),
+                #                                        for_object=next_object_desig.resolve()
+                #                                        ).resolve()
 
                 # self.world.remove_vis_axis()
 
@@ -336,6 +350,7 @@ class PickAndPlaceDemo:
 
                 NavigateAction(target_locations=[place_stand.pose]).resolve().perform()
 
+                rospy.loginfo("Placing {} on kitchen island.".format(next_object_name))
                 PlaceAction(object_designator_description=next_object_desig,
                             target_locations=[next_placing_pose],
                             arms=[pickup_arm]
@@ -349,4 +364,7 @@ if __name__ == "__main__":
     print("Starting demo")
 
     Demo = PickAndPlaceDemo()  # init demo and spawn objects
-    Demo.run()  # run demo
+
+    # cool_demo=True, use OPM/DAGAP services
+    # cool_demo=False, follow list order when placing the objects (conservative demo with predefined sequence)
+    Demo.run(cool_demo=True)  # run demo
