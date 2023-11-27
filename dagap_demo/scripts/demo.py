@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from time import sleep
 
 # ROS Imports
 import rospy
@@ -180,11 +181,11 @@ class PickAndPlaceDemo:
         self.query_object_list_map[5].object_frame =\
             ("simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
 
-        self.world.add_vis_axis(self.bowl.get_pose())
-        self.world.add_vis_axis(self.breakfast_cereal.get_pose())
-        self.world.add_vis_axis(self.cup.get_pose())
-        self.world.add_vis_axis(self.spoon.get_pose())
-        self.world.add_vis_axis(self.milk.get_pose())
+        # self.world.add_vis_axis(self.bowl.get_pose())
+        # self.world.add_vis_axis(self.breakfast_cereal.get_pose())
+        # self.world.add_vis_axis(self.cup.get_pose())
+        # self.world.add_vis_axis(self.spoon.get_pose())
+        # self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
@@ -261,12 +262,12 @@ class PickAndPlaceDemo:
                     # service return frame not the name
                     res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
                                                                      object_list=object_list)
-                    rospy.loginfo("Received answer:")
-                    print(res)
+                    rospy.loginfo("OPM returned: {}".format(res.next_object))
                 else:
                     # if conservative demo take next object in list
                     res = GetNextOPMObjectResponse(next_object=object_list[1].object_frame,
                                                    hand='left')
+                    rospy.loginfo("Taking next object: {}".format(res.next_object))
                     pass
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
@@ -291,6 +292,7 @@ class PickAndPlaceDemo:
                     description = "Pick up"
                     gripper: GetGraspPoseResponse = dagap_client(task_description=description,
                                                                  object_frame=[res.next_object])
+                    rospy.loginfo("DAGAP returned: {}".format(gripper.grasp_pose[0].header.frame_id))
 
                     if "l_gripper" in gripper.grasp_pose[0].header.frame_id:
                         pickup_arm = "left"
@@ -336,11 +338,12 @@ class PickAndPlaceDemo:
                     target_frame="simulated/map",
                     source_frame="simulated/" + self.kitchen.get_link_tf_frame("kitchen_island_surface")
                 ).pose
-                self.world.add_vis_axis(
-                    Pose(dagap_tf.point_to_list(nullpose.position), dagap_tf.quaternion_to_list(nullpose.orientation)))
+                # self.world.add_vis_axis(
+                #     Pose(dagap_tf.point_to_list(nullpose.position),
+                #          dagap_tf.quaternion_to_list(nullpose.orientation)))
 
                 next_placing_pose = self.get_placing_pose_from_name(next_object_name)
-                self.world.add_vis_axis(next_placing_pose)
+                # self.world.add_vis_axis(next_placing_pose)
 
                 # Get position to stand while placing the object
                 place_stand = CostmapLocation(target=next_placing_pose,
@@ -357,7 +360,7 @@ class PickAndPlaceDemo:
                             ).resolve().perform()
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
 
-                self.world.remove_vis_axis()  # Remove visualizations
+                # self.world.remove_vis_axis()  # Remove visualizations
 
 
 if __name__ == "__main__":
@@ -365,6 +368,16 @@ if __name__ == "__main__":
 
     Demo = PickAndPlaceDemo()  # init demo and spawn objects
 
+    # print("Waiting 10 s")
+    # sleep(10)
+
     # cool_demo=True, use OPM/DAGAP services
     # cool_demo=False, follow list order when placing the objects (conservative demo with predefined sequence)
-    Demo.run(cool_demo=True)  # run demo
+    cool_demo = True
+    if cool_demo:
+        rospy.loginfo("Running demo using the DAGAP/OPM services.")
+    else:
+        rospy.loginfo("Running hardcoded demo.")
+
+    Demo.run(cool_demo=cool_demo)  # run demo
+    rospy.loginfo("Finishing demo.")
