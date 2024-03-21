@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 from time import sleep
@@ -144,7 +144,7 @@ class PickAndPlaceDemo:
         # Spawn cup
         self.cup = Object(self.query_object_list_map[2].Object,
                           self.query_object_list_map[2].Object,
-                          path="../resources/cup.stl",
+                          path="../../resources/cup.stl",
                           pose=self.query_object_list_map[2].object_location)
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
