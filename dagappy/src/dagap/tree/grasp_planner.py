@@ -7,17 +7,18 @@ import dagap.utils.tfwrapper as dagap_tf
 
 
 class GraspPlanner(Behaviour):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         rospy.loginfo("Starting grasp planner")
         self.tfl = tf.TransformListener()
         self.tfb = tf.TransformBroadcaster()
         dagap_tf.init()
 
 
-    def decide(self, object, action, robot, opm_action: bool, reference_frame: str = u"", object_frame: str = None):
+    def decide(self, grasping_object, action, robot, opm_action: bool, reference_frame: str = u"", object_frame: str = None):
         """
 
-        :param object: list of frame names
+        :param grasping_object: list of frame names
         :param action: string
         :param robot: Robot Object
         :param opm_action: Boolean if action comes from OPM
@@ -30,9 +31,9 @@ class GraspPlanner(Behaviour):
             # check distance to estimate which hand to use
 
             if opm_action:
-                task_object = [object[0]]
+                task_object = [grasping_object[0]]
             else:
-                task_object = object
+                task_object = grasping_object
 
             try:
                 if object_frame:
@@ -45,7 +46,7 @@ class GraspPlanner(Behaviour):
 
             try:
                 if len(task_object) == 1:
-                    # start to perform one handed task
+                    # start to perform one-handed task
                     # check distance to estimate which hand to use
                     current_frame = task_object[0]
                     pose_list = []
@@ -67,7 +68,8 @@ class GraspPlanner(Behaviour):
                         trans = transform.transform.translation
                         rot = transform.transform.rotation
                         pose_list.append([trans, rot])
-                        distance.append(norm(dagap_tf.point_to_list(trans)))  # add distance of current gripper to object to list
+                        distance.append(
+                            norm(dagap_tf.point_to_list(trans)))  # add distance of current gripper to object to list
 
                     min_index = distance.index(min(distance))
                     winner = gripper_list[min_index]  # get gripper with the smallest distance
