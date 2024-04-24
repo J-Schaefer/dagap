@@ -47,7 +47,7 @@ class DAGAP:
             for element in req.object_frames:
                 object_frames.append(element)
 
-            poses = self.grasp_planner.decide(object=object_frames, action=action, robot=self.robot, opm_action=False)
+            poses = self.grasp_planner.decide(grasping_object=object_frames, action=action, robot=self.robot, opm_action=False)
             res = dagap_msgs.srv.GetGraspPoseResponse(poses)
             return res
 
@@ -92,7 +92,7 @@ class DAGAP:
         except KeyError:
             rospy.loginfo("Did not find robot_root. Assuming real robot.")
 
-        next_grasp = self.grasp_planner.decide(object=next_object,
+        next_grasp = self.grasp_planner.decide(grasping_object=next_object,
                                                action=u"one hand task",
                                                robot=self.robot,
                                                opm_action=True,
