@@ -12,7 +12,7 @@ from dagap_msgs.msg import *
 import dagap.utils.tfwrapper as dagap_tf
 
 # PyCRAM Imports
-from pycram.process_module import simulated_robot
+from pycram.process_module import simulated_robot, real_robot
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms, ObjectType
@@ -26,23 +26,32 @@ from pycram.plan_failures import IKError
 from pycram.local_transformer import LocalTransformer
 from pycram.ros.robot_state_updater import RobotStateUpdater
 
+import pycram.external_interfaces.giskard as giskardpy
+
+
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
+    rospy.loginfo("Waiting for service.")
     rospy.wait_for_service('dagap_opm_query')
     try:
+        rospy.loginfo("Calling dagap_opm_query.")
         call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
         srv = GetNextOPMObjectRequest(reference_frame, object_list)
         response = call_common_service(srv)
+        rospy.loginfo("Received response.")
         return response
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
 
 
 def dagap_client(task_description: str, object_frame: [str]) -> GetGraspPoseResponse:
+    rospy.loginfo("Waiting for service.")
     rospy.wait_for_service('dagap_query')
     try:
+        rospy.loginfo("Calling dagap_query.")
         call_dagap_service = rospy.ServiceProxy('dagap_query', GetGraspPose)
         srv = GetGraspPoseRequest(task_description, object_frame)
         response = call_dagap_service(srv)
+        rospy.loginfo("Received response.")
         return response
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
@@ -55,13 +64,14 @@ class PickAndPlaceDemo:
         dagap_tf.init()  # call tfwrapper init()
 
         # Set up the bullet world
-        self.world = BulletWorld()
+        self.world = BulletWorld("DIRECT")
         self.world.set_gravity([0, 0, -9.8])
 
-        self.tfbroadcaster = TFBroadcaster()
+        # self.tfbroadcaster = TFBroadcaster()
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
         # RobotStateUpdater("/tf", "/giskard_joint_states")
+        # giskardpy.init_giskard_interface()
 
         # Spawn ground plane
         self.plane = Object(name="floor", type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
@@ -84,9 +94,9 @@ class PickAndPlaceDemo:
         ]
 
         self.object_placing_poses: List[Pose] = [
-            Pose([0.4, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
+            Pose([-0.2, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
             Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
-            Pose([-0.24, -0.70, 0.05], [0.0, 0.0, 0.63, 0.77], frame=kitchen_island_surface_frame),  # bowl
+            Pose([-0.24, -0.70, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
             Pose([-0.24, -0.6, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
             Pose([-0.3, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
         ]
@@ -175,15 +185,17 @@ class PickAndPlaceDemo:
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         self.query_object_list_map[1].object_frame =\
-            ("simulated/" + self.breakfast_cereal.tf_frame)
+            (f"{self.breakfast_cereal.tf_frame}/{self.breakfast_cereal.tf_frame}")
         self.query_object_list_map[2].object_frame =\
-            ("simulated/" + self.cup.tf_frame)
+            (f"{self.cup.tf_frame}/{self.cup.tf_frame}")
         self.query_object_list_map[3].object_frame =\
-            ("simulated/" + self.bowl.tf_frame)
+            (f"{self.bowl.tf_frame}/{self.bowl.tf_frame}")
         self.query_object_list_map[4].object_frame =\
-            ("simulated/" + self.spoon.tf_frame)
+            (f"{self.spoon.tf_frame}/{self.spoon.tf_frame}")
         self.query_object_list_map[5].object_frame =\
-            ("simulated/" + self.milk.tf_frame)
+            (f"{self.milk.tf_frame}/{self.milk.tf_frame}")
+
+        giskardpy.sync_worlds()
 
         self.world.add_vis_axis(self.bowl.get_pose())
         self.world.add_vis_axis(self.breakfast_cereal.get_pose())
@@ -192,8 +204,8 @@ class PickAndPlaceDemo:
         self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
-        if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
-                                     "simulated/" + self.bowl.tf_frame):
+        if dagap_tf.lookup_transform(self.kitchen.get_link_tf_frame("sink_area_surface"),
+                                     f"{self.bowl.tf_frame}/{self.bowl.tf_frame}"):
             rospy.loginfo("Test succeeded: Found transform")
         else:
             rospy.logwarn("Test failed: Did not find transform")
@@ -253,10 +265,10 @@ class PickAndPlaceDemo:
         cool_demo: Variable to determine if demo uses OPM/DAGAP service or runs conservatively
         """
         rospy.loginfo("Running demo.")
-        with (simulated_robot):
+        with (real_robot):
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
-                            param_value="simulated/" + self.pr2.tf_frame)
+                            param_value="pr2")
 
             object_list = self.query_object_list_map
 
@@ -341,12 +353,13 @@ class PickAndPlaceDemo:
                 # Visualize coordinate system of kitchen island
                 nullpose = dagap_tf.transform_pose(
                     pose=Pose(),
-                    target_frame="simulated/map",
-                    source_frame="simulated/" + self.kitchen.get_link_tf_frame("kitchen_island_surface")
+                    target_frame="map",
+                    source_frame=self.kitchen.get_link_tf_frame("kitchen_island_surface")
                 ).pose
-                # self.world.add_vis_axis(
-                #     Pose(dagap_tf.point_to_list(nullpose.position),
-                #          dagap_tf.quaternion_to_list(nullpose.orientation)))
+                self.world.add_vis_axis(
+                    Pose(dagap_tf.point_to_list(nullpose.position),
+                         dagap_tf.quaternion_to_list(nullpose.orientation)))
+                # self.world.add_vis_axis(kitchen_island_surface_frame)
 
                 next_placing_pose = self.get_placing_pose_from_name(next_object_name)
                 self.world.add_vis_axis(next_placing_pose)
