@@ -15,14 +15,16 @@ import dagap.utils.tfwrapper as dagap_tf
 from pycram.process_module import simulated_robot
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
-from pycram.enums import Arms
+from pycram.enums import Arms, ObjectType
 from pycram.designators.object_designator import *
+from pycram.bullet_world import BulletWorld, Object
+# from pycram.world_concepts.world_object import Object  # from newer commit
 from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
 from pycram.pose import Pose
 from pycram.plan_failures import IKError
 from pycram.local_transformer import LocalTransformer
-
+from pycram.ros.robot_state_updater import RobotStateUpdater
 
 def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
     rospy.wait_for_service('dagap_opm_query')
@@ -59,12 +61,14 @@ class PickAndPlaceDemo:
         self.tfbroadcaster = TFBroadcaster()
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
+        # RobotStateUpdater("/tf", "/giskard_joint_states")
+
         # Spawn ground plane
-        self.plane = Object(name="floor", type="environment", path="plane.urdf", world=self.world)
+        self.plane = Object(name="floor", type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
         # plane.set_color([0, 0, 0, 1])
 
         # Spawn kitchen
-        self.kitchen = Object(name="kitchen", type="environment", path="kitchen.urdf")
+        self.kitchen = Object(name="kitchen", type=ObjectType.ENVIRONMENT, path="kitchen.urdf")
         # kitchen.set_color([0.2, 0, 0.4, 0.6])
         self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
@@ -74,17 +78,17 @@ class PickAndPlaceDemo:
         self.object_spawning_poses: List[Pose] = [
             Pose([0.2, -0.15, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
             Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
-            Pose([0.0, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
+            Pose([-0.3, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
             Pose([0.15, -0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
             Pose([0.07, -0.35, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
         ]
 
         self.object_placing_poses: List[Pose] = [
-            Pose([-0.2, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
+            Pose([0.4, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
             Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
             Pose([-0.24, -0.70, 0.05], [0.0, 0.0, 0.63, 0.77], frame=kitchen_island_surface_frame),  # bowl
             Pose([-0.24, -0.6, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
-            Pose([0.0, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
+            Pose([-0.3, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
         ]
 
         # Original poses
@@ -167,25 +171,25 @@ class PickAndPlaceDemo:
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
         # Spawn PR2 robot
-        self.pr2 = Object(name="pr2", type="robot", path="pr2.urdf", pose=Pose([0, 0, 0]))
+        self.pr2 = Object(name="pr2", type=ObjectType.ROBOT, path="pr2.urdf", pose=Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         self.query_object_list_map[1].object_frame =\
-            ("simulated/" + self.breakfast_cereal.get_link_tf_frame(link_name="").replace("/", ""))
+            ("simulated/" + self.breakfast_cereal.tf_frame)
         self.query_object_list_map[2].object_frame =\
-            ("simulated/" + self.cup.get_link_tf_frame(link_name="").replace("/", ""))
+            ("simulated/" + self.cup.tf_frame)
         self.query_object_list_map[3].object_frame =\
-            ("simulated/" + self.bowl.get_link_tf_frame(link_name="").replace("/", ""))
+            ("simulated/" + self.bowl.tf_frame)
         self.query_object_list_map[4].object_frame =\
-            ("simulated/" + self.spoon.get_link_tf_frame(link_name="").replace("/", ""))
+            ("simulated/" + self.spoon.tf_frame)
         self.query_object_list_map[5].object_frame =\
-            ("simulated/" + self.milk.get_link_tf_frame(link_name="").replace("/", ""))
+            ("simulated/" + self.milk.tf_frame)
 
-        # self.world.add_vis_axis(self.bowl.get_pose())
-        # self.world.add_vis_axis(self.breakfast_cereal.get_pose())
-        # self.world.add_vis_axis(self.cup.get_pose())
-        # self.world.add_vis_axis(self.spoon.get_pose())
-        # self.world.add_vis_axis(self.milk.get_pose())
+        self.world.add_vis_axis(self.bowl.get_pose())
+        self.world.add_vis_axis(self.breakfast_cereal.get_pose())
+        self.world.add_vis_axis(self.cup.get_pose())
+        self.world.add_vis_axis(self.spoon.get_pose())
+        self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
         if dagap_tf.lookup_transform("simulated/" + self.kitchen.get_link_tf_frame("sink_area_surface"),
@@ -252,7 +256,7 @@ class PickAndPlaceDemo:
         with (simulated_robot):
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
-                            param_value="simulated/" + self.pr2.get_link_tf_frame(link_name=""))
+                            param_value="simulated/" + self.pr2.tf_frame)
 
             object_list = self.query_object_list_map
 
@@ -307,6 +311,8 @@ class PickAndPlaceDemo:
 
                 try:
                     rospy.loginfo("Picking up {}".format(next_object_name))
+                    self.world.add_vis_axis(self.pr2.get_link_pose("r_gripper_tool_frame"))
+                    self.world.add_vis_axis(self.pr2.get_link_pose("l_gripper_tool_frame"))
                     PickUpAction(object_designator_description=next_object_desig,
                                  arms=[pickup_arm],
                                  grasps=["front"]
@@ -343,7 +349,7 @@ class PickAndPlaceDemo:
                 #          dagap_tf.quaternion_to_list(nullpose.orientation)))
 
                 next_placing_pose = self.get_placing_pose_from_name(next_object_name)
-                # self.world.add_vis_axis(next_placing_pose)
+                self.world.add_vis_axis(next_placing_pose)
 
                 # Get position to stand while placing the object
                 place_stand = CostmapLocation(target=next_placing_pose,
