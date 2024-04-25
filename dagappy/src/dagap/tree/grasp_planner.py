@@ -57,7 +57,7 @@ class GraspPlanner(Behaviour):
                     # Add tf_root for simulated robot in bullet world
                     # use local gripper list and leave robot.gripper_list intact
                     if robot.tf_root:
-                        gripper_list = ['{0}{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
+                        gripper_list = ['{0}/{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
 
                     for gripper in gripper_list:  # use local gripper list
                         # FIXME: get tf prefix and concatenate, right now frame cannot be found
