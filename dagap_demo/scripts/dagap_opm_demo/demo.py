@@ -15,13 +15,13 @@ import dagap.utils.tfwrapper as dagap_tf
 from pycram.process_module import simulated_robot, real_robot
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
-from pycram.enums import Arms, ObjectType
+from pycram.datastructures.enums import Arms, ObjectType
 from pycram.designators.object_designator import *
-from pycram.bullet_world import BulletWorld, Object
+from pycram.worlds.bullet_world import BulletWorld, Object
 # from pycram.world_concepts.world_object import Object  # from newer commit
 from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
-from pycram.pose import Pose
+from pycram.datastructures.pose import Pose
 from pycram.plan_failures import IKError
 from pycram.local_transformer import LocalTransformer
 from pycram.ros.robot_state_updater import RobotStateUpdater
@@ -74,11 +74,11 @@ class PickAndPlaceDemo:
         # giskardpy.init_giskard_interface()
 
         # Spawn ground plane
-        self.plane = Object(name="floor", type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
+        self.plane = Object(name="floor", obj_type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
         # plane.set_color([0, 0, 0, 1])
 
         # Spawn kitchen
-        self.kitchen = Object(name="kitchen", type=ObjectType.ENVIRONMENT, path="kitchen.urdf")
+        self.kitchen = Object(name="kitchen", obj_type=ObjectType.ENVIRONMENT, path="kitchen.urdf")
         # kitchen.set_color([0.2, 0, 0.4, 0.6])
         self.kitchen_desig = ObjectDesignatorDescription(names=["kitchen"])
 
@@ -158,7 +158,7 @@ class PickAndPlaceDemo:
         # Spawn cup
         self.cup = Object(self.query_object_list_map[2].Object,
                           self.query_object_list_map[2].Object,
-                          path="../../resources/cup.stl",
+                          path="cup.stl",
                           pose=self.query_object_list_map[2].object_location)
         self.cup_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[2].Object])
         # Spawn bowl
@@ -181,7 +181,7 @@ class PickAndPlaceDemo:
         self.milk_desig = ObjectDesignatorDescription(names=[self.query_object_list_map[5].Object])
 
         # Spawn PR2 robot
-        self.pr2 = Object(name="pr2", type=ObjectType.ROBOT, path="pr2.urdf", pose=Pose([0, 0, 0]))
+        self.pr2 = Object(name="pr2", obj_type=ObjectType.ROBOT, path="pr2.urdf", pose=Pose([0, 0, 0]))
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         self.query_object_list_map[1].object_frame =\
