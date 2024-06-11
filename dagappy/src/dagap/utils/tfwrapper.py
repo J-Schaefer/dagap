@@ -5,6 +5,7 @@ from tf2_geometry_msgs import do_transform_pose
 
 tf_buffer: Buffer = None
 
+
 def init(tf_buffer_size=15):
     global tf_buffer
     tf_buffer = Buffer(rospy.Duration(tf_buffer_size))
@@ -73,6 +74,32 @@ def lookup_transform(target_frame, source_frame, time=0, timeout=5.0) -> Transfo
                                                 timeout=rospy.Duration(timeout))
     except ExtrapolationException:
         return TransformStamped()
+
+
+def frame_exist(frame_id: str) -> bool:
+    local_tf_buffer = get_tf_buffer()
+    frames = local_tf_buffer.all_frames_as_string()
+    frame_list = frames.split('\n')
+    for frame in frame_list:
+        split_frame = frame.split(' ')
+        only_frame = ''
+        if len(split_frame) > 1:
+            only_frame = split_frame[1]
+        if frame_id == only_frame:
+            return True
+
+
+def get_closest_matching_frame(frame_id: str) -> str:
+    local_tf_buffer = get_tf_buffer()
+    frames = local_tf_buffer.all_frames_as_string()
+    frame_list = frames.split('\n')
+    for frame in frame_list:
+        split_frame = frame.split(' ')
+        only_frame = ''
+        if len(split_frame) > 1:
+            only_frame = split_frame[1]
+        if frame_id in only_frame:
+            return only_frame
 
 
 def transform_pose(pose: Pose, target_frame: str, source_frame: str) -> PoseStamped:

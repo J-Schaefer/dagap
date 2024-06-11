@@ -67,7 +67,7 @@ class PickAndPlaceDemo:
         self.world = BulletWorld("DIRECT")
         self.world.set_gravity([0, 0, -9.8])
 
-        # self.tfbroadcaster = TFBroadcaster()
+        self.tfbroadcaster = TFBroadcaster()
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
         # RobotStateUpdater("/tf", "/giskard_joint_states")
@@ -185,15 +185,15 @@ class PickAndPlaceDemo:
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         self.query_object_list_map[1].object_frame =\
-            (f"{self.breakfast_cereal.tf_frame}/{self.breakfast_cereal.tf_frame}")
+            (f"simulated/{self.breakfast_cereal.tf_frame}")
         self.query_object_list_map[2].object_frame =\
-            (f"{self.cup.tf_frame}/{self.cup.tf_frame}")
+            (f"simulated/{self.cup.tf_frame}")
         self.query_object_list_map[3].object_frame =\
-            (f"{self.bowl.tf_frame}/{self.bowl.tf_frame}")
+            (f"simulated/{self.bowl.tf_frame}")
         self.query_object_list_map[4].object_frame =\
-            (f"{self.spoon.tf_frame}/{self.spoon.tf_frame}")
+            (f"simulated/{self.spoon.tf_frame}")
         self.query_object_list_map[5].object_frame =\
-            (f"{self.milk.tf_frame}/{self.milk.tf_frame}")
+            (f"simulated/{self.milk.tf_frame}")
 
         giskardpy.sync_worlds()
 
@@ -204,8 +204,8 @@ class PickAndPlaceDemo:
         self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
-        if dagap_tf.lookup_transform(self.kitchen.get_link_tf_frame("sink_area_surface"),
-                                     f"{self.bowl.tf_frame}/{self.bowl.tf_frame}"):
+        if dagap_tf.lookup_transform(f"simulated/{self.kitchen.get_link_tf_frame('sink_area_surface')}",
+                                     f"simulated/{self.bowl.tf_frame}"):
             rospy.loginfo("Test succeeded: Found transform")
         else:
             rospy.logwarn("Test failed: Did not find transform")

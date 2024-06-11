@@ -63,7 +63,16 @@ class GraspPlanner(Behaviour):
                         # FIXME: get tf prefix and concatenate, right now frame cannot be found
                         rospy.loginfo("Calculating distance from {} to {}".format(gripper,
                                                                                   current_frame))
-                        transform: TransformStamped = dagap_tf.lookup_transform(gripper, current_frame)
+                        if dagap_tf.frame_exist(gripper) and dagap_tf.frame_exist(current_frame):
+                            rospy.loginfo("Both grippers exist. Proceeding.")
+                            transform: TransformStamped = dagap_tf.lookup_transform(gripper, current_frame)
+                        else:
+                            if not dagap_tf.frame_exist(gripper):
+                                rospy.logwarn("[{}]: Gripper frame does not exist.".format(rospy.get_name()))
+                                new_gripper = dagap_tf.get_closest_matching_frame(gripper)
+                                rospy.loginfo("[{}]: Found closest related frame: {}".format(rospy.get_name(),
+                                                                                             new_gripper))
+                                transform: TransformStamped = dagap_tf.lookup_transform(new_gripper, current_frame)
                         rospy.loginfo("[{}]: Found transform".format(rospy.get_name()))
                         trans = transform.transform.translation
                         rot = transform.transform.rotation
