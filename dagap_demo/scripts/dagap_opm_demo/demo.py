@@ -265,7 +265,7 @@ class PickAndPlaceDemo:
         cool_demo: Variable to determine if demo uses OPM/DAGAP service or runs conservatively
         """
         rospy.loginfo("Running demo.")
-        with (real_robot):
+        with (simulated_robot):
             # Send request to DAGAP service
             rospy.set_param(param_name='robot_root',
                             param_value="pr2")
@@ -353,8 +353,8 @@ class PickAndPlaceDemo:
                 # Visualize coordinate system of kitchen island
                 nullpose = dagap_tf.transform_pose(
                     pose=Pose(),
-                    target_frame="map",
-                    source_frame=self.kitchen.get_link_tf_frame("kitchen_island_surface")
+                    target_frame="simulated/map",
+                    source_frame=dagap_tf.get_closest_matching_frame(self.kitchen.get_link_tf_frame("kitchen_island_surface"))
                 ).pose
                 self.world.add_vis_axis(
                     Pose(dagap_tf.point_to_list(nullpose.position),
