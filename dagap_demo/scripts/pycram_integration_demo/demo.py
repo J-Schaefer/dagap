@@ -44,6 +44,20 @@ def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> Get
         print("Service call failed: %s" % e)
 
 
+def opm_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetOPMSortedListResponse:
+    rospy.loginfo("Waiting for service.")
+    rospy.wait_for_service('opm_query')
+    try:
+        rospy.loginfo("Calling opm_query.")
+        call_opm_service = rospy.ServiceProxy('opm_query', GetOPMSortedList)
+        srv = GetNextOPMObjectRequest(object_list)
+        response = call_opm_service(srv)
+        rospy.loginfo("Received response.")
+        return response
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
+
+
 def dagap_client(task_description: str, object_frame: [str]) -> GetGraspPoseResponse:
     rospy.loginfo("Waiting for service.")
     rospy.wait_for_service('dagap_query')
@@ -277,20 +291,18 @@ class PickAndPlaceDemo:
 
                 if cool_demo:
                     # service return frame not the name
-                    res: GetNextOPMObjectResponse = opm_dagap_client(reference_frame=self.reference_frame,
-                                                                     object_list=object_list)
-                    rospy.loginfo("OPM returned: {}".format(res.next_object))
+                    next_opm_object: GetOPMSortedListResponse = opm_client(object_list=object_list)
+                    rospy.loginfo("OPM returned: {}".format(next_opm_object.next_object))
                 else:
                     # if conservative demo take next object in list
-                    res = GetNextOPMObjectResponse(next_object=object_list[1].object_frame,
-                                                   hand='left')
-                    rospy.loginfo("Taking next object: {}".format(res.next_object))
+                    next_opm_object = GetOPMSortedListResponse(next_object=object_list[1].object_frame)
+                    rospy.loginfo("Taking next object: {}".format(next_opm_object.next_object))
                     pass
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
                 MoveTorsoAction([0.33]).resolve().perform()
 
-                next_object_name = self.get_name_from_frame(res.next_object)
+                next_object_name = self.get_name_from_frame(next_opm_object.next_object)
                 next_object_desig: ObjectDesignatorDescription = self.get_designator_from_name(next_object_name)
 
                 # Remove current object from list for next iteration
@@ -305,36 +317,22 @@ class PickAndPlaceDemo:
 
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
 
-                if cool_demo:
-                    description = "Pick up"
-                    gripper: GetGraspPoseResponse = dagap_client(task_description=description,
-                                                                 object_frame=[res.next_object])
-                    rospy.loginfo("DAGAP returned: {}".format(gripper.grasp_pose[0].header.frame_id))
-
-                    if "l_gripper" in gripper.grasp_pose[0].header.frame_id:
-                        pickup_arm = "left"
-                        rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
-                    elif "r_gripper" in gripper.grasp_pose[0].header.frame_id:
-                        pickup_arm = "right"
-                        rospy.loginfo("Picking up object with {} hand.".format(pickup_arm))
-                    else:
-                        rospy.logwarn("Could not allocate a gripper.")
-                else:  # if conservative demo
-                    pickup_arm = pickup_pose.reachable_arms[0]
-
                 try:
-                    rospy.loginfo("Picking up {}".format(next_object_name))
-                    self.world.add_vis_axis(self.pr2.get_link_pose("r_gripper_tool_frame"))
-                    self.world.add_vis_axis(self.pr2.get_link_pose("l_gripper_tool_frame"))
-                    first_pickup = DualArmPickupAction(object_designator_description=next_object_desig,
-                                                       grasps=["front"]
-                                                       ).resolve()
-                    pickup_arm = first_pickup.arm
-                    first_pickup.perform()
-                    PickUpAction(object_designator_description=next_object_desig,
-                                 arms=[pickup_arm],
-                                 grasps=["front"]
-                                 ).resolve().perform()
+                    if cool_demo:
+                        rospy.loginfo("Picking up {}".format(next_object_name))
+                        self.world.add_vis_axis(self.pr2.get_link_pose("r_gripper_tool_frame"))
+                        self.world.add_vis_axis(self.pr2.get_link_pose("l_gripper_tool_frame"))
+                        first_pickup = DualArmPickupAction(object_designator_description=next_object_desig,
+                                                           grasps=["front"]
+                                                           ).resolve()
+                        pickup_arm = first_pickup.arm
+                        first_pickup.perform()
+                    else:  # if conservative demo
+                        pickup_arm = pickup_pose.reachable_arms[0]
+                        PickUpAction(object_designator_description=next_object_desig,
+                                     arms=[pickup_arm],
+                                     grasps=["front"]
+                                     ).resolve().perform()
                 except IKError:
                     rospy.logwarn("Failed execution with {} hand.".format(pickup_arm))
                     if pickup_arm == "left":
