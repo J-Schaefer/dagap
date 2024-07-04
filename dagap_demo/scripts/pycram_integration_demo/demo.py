@@ -44,13 +44,13 @@ def opm_dagap_client(reference_frame: str, object_list: [OPMObjectQuery]) -> Get
         print("Service call failed: %s" % e)
 
 
-def opm_client(reference_frame: str, object_list: [OPMObjectQuery]) -> GetOPMSortedListResponse:
+def opm_client(object_list: [OPMObjectQuery]) -> GetOPMSortedListResponse:
     rospy.loginfo("Waiting for service.")
     rospy.wait_for_service('opm_query')
     try:
         rospy.loginfo("Calling opm_query.")
         call_opm_service = rospy.ServiceProxy('opm_query', GetOPMSortedList)
-        srv = GetNextOPMObjectRequest(object_list)
+        srv = GetOPMSortedListRequest(object_list)
         response = call_opm_service(srv)
         rospy.loginfo("Received response.")
         return response
@@ -109,7 +109,7 @@ class PickAndPlaceDemo:
         ]
 
         self.object_placing_poses: List[Pose] = [
-            Pose([-0.2, -0.50, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # breakfast-cereal
+            Pose([0.2, -0.20, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame),  # breakfast-cereal
             Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
             Pose([-0.24, -0.70, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
             Pose([-0.24, -0.6, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon

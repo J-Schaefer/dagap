@@ -17,6 +17,7 @@ class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
 
     def __init__(self):
+        # Register services
         # Query to DAGAP, req: objects to manipulate, res: hand to manipulate with
         self.service_dagap_query = rospy.Service('dagap_query', GetGraspPose, self.cb_dagap_service)
         # Service to query OPM, req: list of objects, res: sorted list of objects
