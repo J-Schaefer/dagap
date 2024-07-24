@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
-from time import sleep
 
 # ROS Imports
 import rospy
@@ -13,19 +12,16 @@ import dagap.utils.tfwrapper as dagap_tf
 
 # PyCRAM Imports
 from pycram.process_module import simulated_robot, real_robot
-from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.designators.specialized_designators.action.dual_arm_pickup_action import DualArmPickupAction
-from pycram.datastructures.enums import Arms, ObjectType
+from pycram.datastructures.enums import Arms, ObjectType, Grasp
 from pycram.designators.object_designator import *
-from pycram.worlds.bullet_world import BulletWorld, Object
-# from pycram.world_concepts.world_object import Object  # from newer commit
+from pycram.worlds.bullet_world import BulletWorld, Object, WorldMode
 from pycram.ros.tf_broadcaster import TFBroadcaster
 from pycram.designator import ObjectDesignatorDescription
 from pycram.datastructures.pose import Pose
 from pycram.plan_failures import IKError
 from pycram.local_transformer import LocalTransformer
-from pycram.ros.robot_state_updater import RobotStateUpdater
 
 import pycram.external_interfaces.giskard as giskardpy
 
@@ -79,14 +75,11 @@ class PickAndPlaceDemo:
         dagap_tf.init()  # call tfwrapper init()
 
         # Set up the bullet world
-        self.world = BulletWorld("DIRECT")
+        self.world = BulletWorld(WorldMode.GUI)
         self.world.set_gravity([0, 0, -9.8])
 
         self.tfbroadcaster = TFBroadcaster()
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
-
-        # RobotStateUpdater("/tf", "/giskard_joint_states")
-        # giskardpy.init_giskard_interface()
 
         # Spawn ground plane
         self.plane = Object(name="floor", obj_type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
@@ -101,11 +94,11 @@ class PickAndPlaceDemo:
         kitchen_island_surface_frame = self.kitchen.get_link_tf_frame("kitchen_island_surface")
 
         self.object_spawning_poses: List[Pose] = [
-            Pose([0.2, -0.15, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
+            Pose([0.2, -0.9, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
             Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
             Pose([-0.3, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
             Pose([0.15, -0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
-            Pose([0.07, -0.35, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
+            Pose([0.07, 0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
         ]
 
         self.object_placing_poses: List[Pose] = [
@@ -323,7 +316,7 @@ class PickAndPlaceDemo:
                         self.world.add_vis_axis(self.pr2.get_link_pose("r_gripper_tool_frame"))
                         self.world.add_vis_axis(self.pr2.get_link_pose("l_gripper_tool_frame"))
                         first_pickup = DualArmPickupAction(object_designator_description=next_object_desig,
-                                                           grasps=["front"]
+                                                           grasps=[Grasp.FRONT]
                                                            ).resolve()
                         pickup_arm = first_pickup.arm
                         first_pickup.perform()
@@ -331,7 +324,7 @@ class PickAndPlaceDemo:
                         pickup_arm = pickup_pose.reachable_arms[0]
                         PickUpAction(object_designator_description=next_object_desig,
                                      arms=[pickup_arm],
-                                     grasps=["front"]
+                                     grasps=[Grasp.FRONT]
                                      ).resolve().perform()
                 except IKError:
                     rospy.logwarn("Failed execution with {} hand.".format(pickup_arm))
@@ -342,7 +335,7 @@ class PickAndPlaceDemo:
                         pickup_arm = "left"
                         rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
-                                 grasps=["front"]
+                                 grasps=[Grasp.FRONT]
                                  ).resolve().perform()
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
