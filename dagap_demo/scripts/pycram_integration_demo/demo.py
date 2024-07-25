@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 # ROS Imports
-import rospy
 
 # DAGAP Imports
 from dagap_msgs.srv import *
@@ -70,9 +69,12 @@ def dagap_client(task_description: str, object_frame: [str]) -> GetGraspPoseResp
 
 class PickAndPlaceDemo:
 
-    def __init__(self):
+    def __init__(self, use_dual_arm: bool = True, use_opm: bool = True):
         self.reference_frame = "iai_kitchen/sink_area_surface"
         dagap_tf.init()  # call tfwrapper init()
+
+        self.use_dual_arm = use_dual_arm  # use dual arm pickup action heuristic
+        self.use_opm = use_opm  # use OPM service
 
         # Set up the bullet world
         self.world = BulletWorld(WorldMode.GUI)
@@ -97,7 +99,7 @@ class PickAndPlaceDemo:
             Pose([0.2, -0.9, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
             Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
             Pose([-0.3, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
-            Pose([0.15, -0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
+            Pose([0.15, -0.4, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
             Pose([0.07, 0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
         ]
 
@@ -105,20 +107,9 @@ class PickAndPlaceDemo:
             Pose([0.2, -0.20, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame),  # breakfast-cereal
             Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
             Pose([-0.24, -0.70, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
-            Pose([-0.24, -0.6, 0.1], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
+            Pose([-0.24, -0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
             Pose([-0.3, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
         ]
-
-        # Original poses
-        # self.object_spawning_poses_sink: List[Pose] = [
-        #     dagap_tf.list_to_pose([0.2, -0.15, 0.1], [0, 0, 0, 1]),  # breakfast-cereal
-        #     dagap_tf.list_to_pose([0.2, -0.35, 0.05], [0, 0, 0, 1]),  # cup
-        #     dagap_tf.list_to_pose([0.20, -0.75, 0.05], [0, 0, 0, 1]),  # bowl
-        #     dagap_tf.list_to_pose([0.15, -0.4, 0.1], [0, 0, 0, 1]),  # spoon
-        #     dagap_tf.list_to_pose([0.07, -0.35, 0.1], [0, 0, 0, 1])  # milk
-        # ]
-
-        # transform_sink_map = lookup_transform(frame, u'map')
 
         # Hint for type of list object_spawning_poses_map
         self.object_spawning_poses_map: List[Pose] = []
@@ -193,15 +184,15 @@ class PickAndPlaceDemo:
         self.robot_desig = ObjectDesignatorDescription(names=["pr2"]).resolve()
 
         self.query_object_list_map[1].object_frame =\
-            (f"simulated/{self.breakfast_cereal.tf_frame}")
+            f"simulated/{self.breakfast_cereal.tf_frame}"
         self.query_object_list_map[2].object_frame =\
-            (f"simulated/{self.cup.tf_frame}")
+            f"simulated/{self.cup.tf_frame}"
         self.query_object_list_map[3].object_frame =\
-            (f"simulated/{self.bowl.tf_frame}")
+            f"simulated/{self.bowl.tf_frame}"
         self.query_object_list_map[4].object_frame =\
-            (f"simulated/{self.spoon.tf_frame}")
+            f"simulated/{self.spoon.tf_frame}"
         self.query_object_list_map[5].object_frame =\
-            (f"simulated/{self.milk.tf_frame}")
+            f"simulated/{self.milk.tf_frame}"
 
         giskardpy.sync_worlds()
 
@@ -265,13 +256,11 @@ class PickAndPlaceDemo:
         if self.object_names[5] == object_name:
             return self.object_placing_poses_map[4]
 
-    def run(self, cool_demo: bool = True):
+    def run(self):
+        """
+        Run the pick and place demo.
         """
 
-        Parameters
-        ----------
-        cool_demo: Variable to determine if demo uses OPM/DAGAP service or runs conservatively
-        """
         rospy.loginfo("Running demo.")
         with (simulated_robot):
             # Send request to DAGAP service
@@ -282,14 +271,14 @@ class PickAndPlaceDemo:
 
             while len(object_list) > 1:
 
-                if cool_demo:
+                if self.use_opm:
                     # service return frame not the name
                     next_opm_object: GetOPMSortedListResponse = opm_client(object_list=object_list)
-                    rospy.loginfo("OPM returned: {}".format(next_opm_object.next_object))
+                    rospy.loginfo(f"OPM returned: {next_opm_object.next_object}")
                 else:
                     # if conservative demo take next object in list
                     next_opm_object = GetOPMSortedListResponse(next_object=object_list[1].object_frame)
-                    rospy.loginfo("Taking next object: {}".format(next_opm_object.next_object))
+                    rospy.loginfo(f"Taking next object: {next_opm_object.next_object}")
                     pass
 
                 ParkArmsAction([Arms.BOTH]).resolve().perform()
@@ -311,8 +300,8 @@ class PickAndPlaceDemo:
                 NavigateAction(target_locations=[pickup_pose.pose]).resolve().perform()
 
                 try:
-                    if cool_demo:
-                        rospy.loginfo("Picking up {}".format(next_object_name))
+                    if self.use_dual_arm:
+                        rospy.loginfo(f"Picking up {next_object_name}")
                         self.world.add_vis_axis(self.pr2.get_link_pose("r_gripper_tool_frame"))
                         self.world.add_vis_axis(self.pr2.get_link_pose("l_gripper_tool_frame"))
                         first_pickup = DualArmPickupAction(object_designator_description=next_object_desig,
@@ -330,10 +319,10 @@ class PickAndPlaceDemo:
                     rospy.logwarn("Failed execution with {} hand.".format(pickup_arm))
                     if pickup_arm == "left":
                         pickup_arm = "right"
-                        rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
+                        rospy.loginfo(f"Falling back to {pickup_arm} hand.")
                     elif pickup_arm == "right":
                         pickup_arm = "left"
-                        rospy.loginfo("Falling back to {} hand.".format(pickup_arm))
+                        rospy.loginfo(f"Falling back to {pickup_arm} hand.")
                     PickUpAction(object_designator_description=next_object_desig, arms=[pickup_arm],
                                  grasps=[Grasp.FRONT]
                                  ).resolve().perform()
@@ -351,7 +340,8 @@ class PickAndPlaceDemo:
                 nullpose = dagap_tf.transform_pose(
                     pose=Pose(),
                     target_frame="simulated/map",
-                    source_frame=dagap_tf.get_closest_matching_frame(self.kitchen.get_link_tf_frame("kitchen_island_surface"))
+                    source_frame=dagap_tf.get_closest_matching_frame(
+                        self.kitchen.get_link_tf_frame("kitchen_island_surface"))
                 ).pose
                 self.world.add_vis_axis(
                     Pose(dagap_tf.point_to_list(nullpose.position),
@@ -369,7 +359,7 @@ class PickAndPlaceDemo:
 
                 NavigateAction(target_locations=[place_stand.pose]).resolve().perform()
 
-                rospy.loginfo("Placing {} on kitchen island.".format(next_object_name))
+                rospy.loginfo(f"Placing {next_object_name} on kitchen island.")
                 PlaceAction(object_designator_description=next_object_desig,
                             target_locations=[next_placing_pose],
                             arms=[pickup_arm]
@@ -382,18 +372,20 @@ class PickAndPlaceDemo:
 if __name__ == "__main__":
     print("Starting demo")
 
-    Demo = PickAndPlaceDemo()  # init demo and spawn objects
+    use_dual_arm = True  # use dual arm pickup action
+    use_opm = False  # use OPM service
 
-    # print("Waiting 10 s")
-    # sleep(10)
-
-    # cool_demo=True, use OPM/DAGAP services
-    # cool_demo=False, follow list order when placing the objects (conservative demo with predefined sequence)
-    cool_demo = True
-    if cool_demo:
-        rospy.loginfo("Running demo using the DAGAP/OPM services.")
+    if use_dual_arm:
+        rospy.loginfo("Running demo using the dual arm heuristic.")
     else:
-        rospy.loginfo("Running hardcoded demo.")
+        rospy.loginfo("Running demo without the dual arm heuristic.")
 
-    Demo.run(cool_demo=cool_demo)  # run demo
+    if use_opm:
+        rospy.loginfo("Running demo using the OPM service.")
+    else:
+        rospy.loginfo("Running demo without the OPM service.")
+
+    Demo = PickAndPlaceDemo(use_dual_arm=use_dual_arm, use_opm=use_opm)  # init demo and spawn objects
+
+    Demo.run()  # run demo
     rospy.loginfo("Finishing demo.")
