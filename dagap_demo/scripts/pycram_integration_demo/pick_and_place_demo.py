@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 # ROS Imports
+import rospy
 
 # DAGAP Imports
 from dagap_msgs.srv import *
@@ -42,7 +43,7 @@ class PickAndPlaceDemo:
         self.local_transformer = LocalTransformer()  # PyCRAM tf transformer
 
         # Spawn ground plane
-        self.plane = Object(name="floor", obj_type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
+        # self.plane = Object(name="floor", obj_type=ObjectType.ENVIRONMENT, path="plane.urdf", world=self.world)
         # plane.set_color([0, 0, 0, 1])
 
         # Spawn kitchen
@@ -161,8 +162,8 @@ class PickAndPlaceDemo:
         self.world.add_vis_axis(self.milk.get_pose())
 
         # Test out an example transform to catch exceptions early
-        if dagap_tf.lookup_transform(f"simulated/{self.kitchen.get_link_tf_frame('sink_area_surface')}",
-                                     f"simulated/{self.bowl.tf_frame}"):
+        if dagap_tf.lookup_transform(f"SIMULATED/{self.kitchen.get_link_tf_frame('sink_area_surface')}",
+                                     f"SIMULATED/{self.bowl.tf_frame}"):
             rospy.loginfo("Test succeeded: Found transform")
         else:
             rospy.logwarn("Test failed: Did not find transform")
@@ -214,6 +215,45 @@ class PickAndPlaceDemo:
         if self.object_names[5] == object_name:
             return self.object_placing_poses_map[4]
 
+    def opm_dagap_client(self, reference_frame: str, object_list: [OPMObjectQuery]) -> GetNextOPMObjectResponse:
+        rospy.loginfo("Waiting for service.")
+        rospy.wait_for_service('dagap_opm_query')
+        try:
+            rospy.loginfo("Calling dagap_opm_query.")
+            call_common_service = rospy.ServiceProxy('dagap_opm_query', GetNextOPMObject)
+            srv = GetNextOPMObjectRequest(reference_frame, object_list)
+            response = call_common_service(srv)
+            rospy.loginfo("Received response.")
+            return response
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+    def opm_client(self, object_list: [OPMObjectQuery]) -> GetOPMSortedListResponse:
+        rospy.loginfo("Waiting for service.")
+        rospy.wait_for_service('opm_query')
+        try:
+            rospy.loginfo("Calling opm_query.")
+            call_opm_service = rospy.ServiceProxy('opm_query', GetOPMSortedList)
+            srv = GetOPMSortedListRequest(object_list)
+            response = call_opm_service(srv)
+            rospy.loginfo("Received response.")
+            return response
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
+    def dagap_client(self, task_description: str, object_frame: [str]) -> GetGraspPoseResponse:
+        rospy.loginfo("Waiting for service.")
+        rospy.wait_for_service('dagap_query')
+        try:
+            rospy.loginfo("Calling dagap_query.")
+            call_dagap_service = rospy.ServiceProxy('dagap_query', GetGraspPose)
+            srv = GetGraspPoseRequest(task_description, object_frame)
+            response = call_dagap_service(srv)
+            rospy.loginfo("Received response.")
+            return response
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
     def run(self):
         """
         Run the pick and place demo.
@@ -231,7 +271,7 @@ class PickAndPlaceDemo:
 
                 if self.use_opm:
                     # service return frame not the name
-                    next_opm_object: GetOPMSortedListResponse = opm_client(object_list=object_list)
+                    next_opm_object: GetOPMSortedListResponse = self.opm_client(object_list=object_list)
                     rospy.loginfo(f"OPM returned: {next_opm_object.next_object}")
                 else:
                     # if conservative demo take next object in list
@@ -295,15 +335,15 @@ class PickAndPlaceDemo:
                 # self.world.remove_vis_axis()
 
                 # Visualize coordinate system of kitchen island
-                nullpose = dagap_tf.transform_pose(
-                    pose=Pose(),
-                    target_frame="simulated/map",
-                    source_frame=dagap_tf.get_closest_matching_frame(
-                        self.kitchen.get_link_tf_frame("kitchen_island_surface"))
-                ).pose
-                self.world.add_vis_axis(
-                    Pose(dagap_tf.point_to_list(nullpose.position),
-                         dagap_tf.quaternion_to_list(nullpose.orientation)))
+                # nullpose = dagap_tf.transform_pose(
+                #     pose=Pose(),
+                #     target_frame="simulated/map",
+                #     source_frame=dagap_tf.get_closest_matching_frame(
+                #         self.kitchen.get_link_tf_frame("kitchen_island_surface"))
+                # ).pose
+                # self.world.add_vis_axis(
+                #     Pose(dagap_tf.point_to_list(nullpose.position),
+                #          dagap_tf.quaternion_to_list(nullpose.orientation)))
                 # self.world.add_vis_axis(kitchen_island_surface_frame)
 
                 next_placing_pose = self.get_placing_pose_from_name(next_object_name)
