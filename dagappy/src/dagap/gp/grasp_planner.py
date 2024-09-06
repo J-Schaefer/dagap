@@ -1,19 +1,17 @@
 import rospy
-from py_trees import Behaviour
 import tf
 from geometry_msgs.msg import TransformStamped, PoseStamped
 from numpy.linalg import norm
 import dagap.utils.tfwrapper as dagap_tf
 
 
-class GraspPlanner(Behaviour):
+class GraspPlanner:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         rospy.loginfo("Starting grasp planner")
         self.tfl = tf.TransformListener()
         self.tfb = tf.TransformBroadcaster()
         dagap_tf.init()
-
 
     def decide(self, grasping_object, action, robot, opm_action: bool, reference_frame: str = u"", object_frame: str = None):
         """
