@@ -28,7 +28,10 @@ import pycram.external_interfaces.giskard as giskardpy
 
 class PickAndPlaceDemo:
 
-    def __init__(self, use_dual_arm: bool = True, use_opm: bool = True):
+    def __init__(self, use_dual_arm: bool = True,
+                 use_opm: bool = True,
+                 object_spawning_poses: List[Pose] = None,
+                 object_placing_poses: List[Pose] = None):
         self.reference_frame = "iai_kitchen/sink_area_surface"
         dagap_tf.init()  # call tfwrapper init()
 
@@ -54,21 +57,28 @@ class PickAndPlaceDemo:
         sink_area_surface_frame = self.kitchen.get_link_tf_frame("sink_area_surface")
         kitchen_island_surface_frame = self.kitchen.get_link_tf_frame("kitchen_island_surface")
 
-        self.object_spawning_poses: List[Pose] = [
-            Pose([0.2, -0.9, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
-            Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
-            Pose([-0.3, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
-            Pose([0.15, -0.4, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
-            Pose([0.07, 0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
-        ]
+        # Set up object spawning and placing poses, fall back to default if not provided
+        if object_spawning_poses is None:
+            self.object_spawning_poses: List[Pose] = [
+                Pose([0.2, -0.9, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame),  # breakfast-cereal
+                Pose([0.2, -0.35, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # cup
+                Pose([-0.3, 0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
+                Pose([0.15, -0.4, 0.05], [0, 0, 1, 0], frame=sink_area_surface_frame),  # spoon
+                Pose([0.07, 0.4, 0.1], [0, 0, 1, 0], frame=sink_area_surface_frame)  # milk
+            ]
+        else:
+            self.object_spawning_poses = object_spawning_poses
 
-        self.object_placing_poses: List[Pose] = [
-            Pose([0.2, -0.20, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame),  # breakfast-cereal
-            Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
-            Pose([-0.24, -0.70, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
-            Pose([-0.24, -0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
-            Pose([-0.3, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
-        ]
+        if object_placing_poses is None:
+            self.object_placing_poses: List[Pose] = [
+                Pose([0.2, -0.20, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame),  # breakfast-cereal
+                Pose([-0.10, -0.80, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # cup
+                Pose([-0.24, -0.70, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # bowl
+                Pose([-0.24, -0.5, 0.05], [0, 0, 0, 1], frame=kitchen_island_surface_frame),  # spoon
+                Pose([-0.3, -1.00, 0.1], [0, 0, 1, 0], frame=kitchen_island_surface_frame)  # milk
+            ]
+        else:
+            self.object_placing_poses = object_placing_poses
 
         # Hint for type of list object_spawning_poses_map
         self.object_spawning_poses_map: List[Pose] = []
