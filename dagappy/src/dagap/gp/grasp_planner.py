@@ -1,19 +1,17 @@
 import rospy
-from py_trees import Behaviour
 import tf
 from geometry_msgs.msg import TransformStamped, PoseStamped
 from numpy.linalg import norm
 import dagap.utils.tfwrapper as dagap_tf
 
 
-class GraspPlanner(Behaviour):
+class GraspPlanner:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         rospy.loginfo("Starting grasp planner")
         self.tfl = tf.TransformListener()
         self.tfb = tf.TransformBroadcaster()
         dagap_tf.init()
-
 
     def decide(self, grasping_object, action, robot, opm_action: bool, reference_frame: str = u"", object_frame: str = None):
         """
@@ -57,13 +55,22 @@ class GraspPlanner(Behaviour):
                     # Add tf_root for simulated robot in bullet world
                     # use local gripper list and leave robot.gripper_list intact
                     if robot.tf_root:
-                        gripper_list = ['{0}{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
+                        gripper_list = ['{0}/{1}'.format(robot.tf_root, gripper) for gripper in robot.gripper_list]
 
                     for gripper in gripper_list:  # use local gripper list
                         # FIXME: get tf prefix and concatenate, right now frame cannot be found
                         rospy.loginfo("Calculating distance from {} to {}".format(gripper,
                                                                                   current_frame))
-                        transform: TransformStamped = dagap_tf.lookup_transform(gripper, current_frame)
+                        if dagap_tf.frame_exist(gripper) and dagap_tf.frame_exist(current_frame):
+                            rospy.loginfo("Both grippers exist. Proceeding.")
+                            transform: TransformStamped = dagap_tf.lookup_transform(gripper, current_frame)
+                        else:
+                            if not dagap_tf.frame_exist(gripper):
+                                rospy.logwarn("[{}]: Gripper frame does not exist.".format(rospy.get_name()))
+                                new_gripper = dagap_tf.get_closest_matching_frame(gripper)
+                                rospy.loginfo("[{}]: Found closest related frame: {}".format(rospy.get_name(),
+                                                                                             new_gripper))
+                                transform: TransformStamped = dagap_tf.lookup_transform(new_gripper, current_frame)
                         rospy.loginfo("[{}]: Found transform".format(rospy.get_name()))
                         trans = transform.transform.translation
                         rot = transform.transform.rotation

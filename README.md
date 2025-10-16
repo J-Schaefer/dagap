@@ -20,7 +20,6 @@ Then install some Python dependencies:
 
 ```bash
 python3 -m pip install pybullet
-python3 -m pip install pymesh
 python3 -m pip install nltk
 ```
 

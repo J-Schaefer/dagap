@@ -6,7 +6,7 @@ from __future__ import print_function
 import rospy
 
 # PyCRAM Imports
-from pycram.process_module import simulated_robot
+from pycram.process_module import simulated_robot, real_robot
 from pycram.designators.location_designator import *
 from pycram.designators.action_designator import *
 from pycram.enums import Arms
@@ -17,8 +17,10 @@ from pycram.pose import Pose
 from pycram.plan_failures import IKError
 from pycram.local_transformer import LocalTransformer
 
+
 class PopcornDemo:
     def __init__(self):
+
         pass
 
     def run(self):

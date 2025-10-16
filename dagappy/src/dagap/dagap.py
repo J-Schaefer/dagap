@@ -1,15 +1,9 @@
-import rospy
-
-from dagap.sample import SampleGrasp
-from py_trees import Sequence, Selector, BehaviourTree, Blackboard
-from dagap.tree.mesher import Mesher
-from dagap.tree.nl_module import NLModule
-from dagap.tree.grasp_planner import GraspPlanner
-from dagap.tree.robot import Robot
+from dagap.utils.nl_module import NLModule
+from dagap.gp.grasp_planner import GraspPlanner
+from dagap.utils.robot import Robot
 from opm.opm import OPM
 
 from dagap_msgs.srv import *
-from dagap_msgs.msg import *
 from dagap.utils.tfwrapper import *
 
 
@@ -17,6 +11,7 @@ class DAGAP:
     manipulation_cases = {1: u"one hand seeking", 2: u"one hand fixed", 3: u"fixed offset", 4: u"self-handover"}
 
     def __init__(self):
+        # Register services
         # Query to DAGAP, req: objects to manipulate, res: hand to manipulate with
         self.service_dagap_query = rospy.Service('dagap_query', GetGraspPose, self.cb_dagap_service)
         # Service to query OPM, req: list of objects, res: sorted list of objects
@@ -100,19 +95,6 @@ class DAGAP:
                                                object_frame=next_object_frame)
         res = dagap_msgs.srv.GetNextOPMObjectResponse(next_grasp[0], next_grasp[1])
         return res
-
-    # TODO: grow tree
-    def grow_dagap(self):
-        rospy.loginfo("Growing tree.")
-        root = Sequence("DAGAP")
-        root.add_child(self.grow_preparation())
-        return root
-
-    def grow_preparation(self):
-        preparation = Sequence("Preparation")
-        preparation.add_child(Mesher("Prepare meshes"))  # add Mesher
-        preparation.add_child(NLModule("Parse command"))
-        return preparation
 
     def run(self):
         sleeper = rospy.Rate(10)  # rate in Hz
